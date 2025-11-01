@@ -1,0 +1,39 @@
+{
+  "name": "Orbita Icons Checker",
+  "id": "1537434937937210613",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://yandex-team.ru",
+      "https://cdn.jsdelivr.net",
+      "https://api.eliza.yandex.net",
+      "https://events.statsigapi.net"
+    ]
+  },
+  "documentAccess": "dynamic-page",
+  "menu": [
+    {
+      "name": "Проверить иконки",
+      "command": "check-icons"
+    },
+    {
+      "name": "AI Design Lint",
+      "command": "ai-design-lint"
+    },
+    {
+      "name": "Node ID Inspector",
+      "command": "node-id-inspector"
+    },
+    {
+      "name": "Экспорт в SVG",
+      "command": "svg-export"
+    },
+    {
+      "name": "Design System Validator",
+      "command": "design-system-validator"
+    }
+  ]
+}

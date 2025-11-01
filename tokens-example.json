@@ -1,0 +1,101 @@
+{
+  "tokens": [
+    {
+      "name": "orb-text/primary",
+      "type": "COLOR",
+      "value": "#34343C",
+      "isRemote": true,
+      "description": "Основной оранжевый цвет",
+      "scopes": ["ALL_FILLS", "ALL_STROKES"]
+    },
+    {
+      "name": "color/neutral/white",
+      "type": "COLOR",
+      "value": "#FFFFFF",
+      "isRemote": true,
+      "description": "Белый цвет",
+      "scopes": ["ALL_FILLS", "ALL_STROKES"]
+    },
+    {
+      "name": "color/neutral/black",
+      "type": "COLOR",
+      "value": "#000000",
+      "isRemote": true,
+      "description": "Чёрный цвет",
+      "scopes": ["ALL_FILLS", "ALL_STROKES"]
+    },
+    {
+      "name": "spacing/xs",
+      "type": "FLOAT",
+      "value": 4,
+      "isRemote": true,
+      "description": "Extra small отступ",
+      "scopes": ["GAP", "ALL_PADDING"]
+    },
+    {
+      "name": "spacing/sm",
+      "type": "FLOAT",
+      "value": 8,
+      "isRemote": true,
+      "description": "Small отступ",
+      "scopes": ["GAP", "ALL_PADDING"]
+    },
+    {
+      "name": "spacing/md",
+      "type": "FLOAT",
+      "value": 16,
+      "isRemote": true,
+      "description": "Medium отступ",
+      "scopes": ["GAP", "ALL_PADDING"]
+    },
+    {
+      "name": "spacing/lg",
+      "type": "FLOAT",
+      "value": 24,
+      "isRemote": true,
+      "description": "Large отступ",
+      "scopes": ["GAP", "ALL_PADDING"]
+    },
+    {
+      "name": "border-radius/sm",
+      "type": "FLOAT",
+      "value": 4,
+      "isRemote": true,
+      "description": "Small радиус скругления",
+      "scopes": ["CORNER_RADIUS"]
+    },
+    {
+      "name": "border-radius/md",
+      "type": "FLOAT",
+      "value": 8,
+      "isRemote": true,
+      "description": "Medium радиус скругления",
+      "scopes": ["CORNER_RADIUS"]
+    },
+    {
+      "name": "border-radius/lg",
+      "type": "FLOAT",
+      "value": 16,
+      "isRemote": true,
+      "description": "Large радиус скругления",
+      "scopes": ["CORNER_RADIUS"]
+    },
+    {
+      "name": "color/background/primary",
+      "type": "COLOR",
+      "value": "#1A1A22",
+      "isRemote": false,
+      "description": "Основной фоновый цвет (локальный токен)",
+      "scopes": ["ALL_FILLS"]
+    },
+    {
+      "name": "color/text/primary",
+      "type": "COLOR",
+      "value": "#FFFFFF",
+      "isRemote": false,
+      "description": "Основной цвет текста (локальный токен)",
+      "scopes": ["ALL_FILLS"]
+    }
+  ]
+}
+

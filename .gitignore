@@ -1,0 +1,30 @@
+# Бэкапы
+backups/
+
+# Временные файлы
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Файлы редактора
+.vscode/
+.idea/
+*.code-workspace
+
+# Backup files
+*.backup
+ui.html.backup
+
+# ZIP архивы (кроме releases)
+*.zip
+!releases/*.zip
+
+# Node modules (если будете использовать)
+node_modules/
+
+# Временные файлы системы
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
