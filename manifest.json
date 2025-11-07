@@ -38,6 +38,10 @@
     {
       "name": "Экспорт свойств компонентов",
       "command": "export-component-properties"
+    },
+    {
+      "name": "Получить текст со страницы",
+      "command": "get-page-text"
     }
   ]
 }

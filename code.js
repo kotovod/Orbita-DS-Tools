@@ -99,6 +99,14 @@ if (figma.command === 'node-id-inspector') {
   setTimeout(() => {
     figma.ui.postMessage({ type: 'set-mode', mode: 'component-properties-export' });
   }, 100);
+} else if (figma.command === 'get-page-text') {
+  // Для получения текста со страницы используем средний UI
+  figma.showUI(__html__, { width: 500, height: 600 });
+  
+  // Отправляем команду в UI для настройки интерфейса
+  setTimeout(() => {
+    figma.ui.postMessage({ type: 'set-mode', mode: 'get-page-text' });
+  }, 100);
 } else {
   // Для основной проверки иконок используем полный UI
   figma.showUI(__html__, { width: 400, height: 480 });
@@ -632,6 +640,193 @@ figma.ui.onmessage = async function(msg) {
             error: error.message || 'Неизвестная ошибка при привязке токена'
           },
           issueIndex: msg.issueIndex
+        });
+      }
+    } else if (msg.type === 'get-all-text-from-page') {
+      // Получение всего текста со страницы
+      try {
+        console.log('Получение всего текста со страницы...');
+        const result = getAllTextFromPage(msg.includeHidden || false);
+        
+        figma.ui.postMessage({
+          type: 'all-text-result',
+          success: true,
+          data: result
+        });
+      } catch (error) {
+        console.error('Ошибка при получении текста со страницы:', error);
+        figma.ui.postMessage({
+          type: 'all-text-result',
+          success: false,
+          error: error.message || 'Не удалось получить текст со страницы'
+        });
+      }
+    } else if (msg.type === 'get-structured-content') {
+      // Получение структурированного контента со страницы
+      try {
+        console.log('Получение структурированного контента со страницы...');
+        const content = await getStructuredPageContent({
+          includeHidden: msg.includeHidden || false,
+          extractImages: msg.extractImages !== false // По умолчанию true
+        });
+        
+        figma.ui.postMessage({
+          type: 'structured-content-result',
+          success: true,
+          data: content
+        });
+      } catch (error) {
+        console.error('Ошибка при получении структурированного контента:', error);
+        figma.ui.postMessage({
+          type: 'structured-content-result',
+          success: false,
+          error: error.message || 'Не удалось получить структурированный контент'
+        });
+      }
+    } else if (msg.type === 'export-to-markdown') {
+      // Экспорт в Markdown с изображениями
+      try {
+        console.log('=== ЭКСПОРТ В MARKDOWN ЗАПУЩЕН ===');
+        console.log('Параметры:', msg);
+        
+        // Обновляем настройки из сообщения
+        if (msg.settings) {
+          if (msg.settings.documentationBlocks) {
+            markdownExportSettings.documentationBlocks = msg.settings.documentationBlocks;
+          }
+          if (msg.settings.headingComponentName) {
+            markdownExportSettings.headingComponentName = msg.settings.headingComponentName;
+          }
+          if (msg.settings.textComponentName) {
+            markdownExportSettings.textComponentName = msg.settings.textComponentName;
+          }
+          if (msg.settings.previewFrameName) {
+            markdownExportSettings.previewFrameName = msg.settings.previewFrameName;
+          }
+          if (msg.settings.headingSizeMapping) {
+            markdownExportSettings.headingSizeMapping = msg.settings.headingSizeMapping;
+          }
+          if (msg.settings.excludedComponents) {
+            markdownExportSettings.excludedComponents = msg.settings.excludedComponents;
+          }
+          
+          console.log('Обновленные настройки:', markdownExportSettings);
+        }
+        
+        // Отправляем прогресс
+        figma.ui.postMessage({
+          type: 'markdown-export-progress',
+          message: 'Сбор контента со страницы...',
+          percent: 10
+        });
+        
+        // Используем настройки из сообщения или значения по умолчанию
+        const settings = msg.settings || {};
+        
+        const content = await getStructuredPageContent({
+          includeHidden: msg.includeHidden || false,
+          extractImages: true,
+          onlyDocumentationBlocks: settings.onlyDocumentationBlocks !== false, // По умолчанию true (только блоки документации)
+          excludedComponents: settings.excludedComponents || markdownExportSettings.excludedComponents || []
+        });
+        
+        console.log('Контент собран:', {
+          totalItems: content.items.length,
+          headings: content.statistics.headings,
+          text: content.statistics.text,
+          images: content.statistics.images
+        });
+        
+        figma.ui.postMessage({
+          type: 'markdown-export-progress',
+          message: `Найдено ${content.statistics.images} изображений. Экспорт...`,
+          percent: 30
+        });
+        
+        // Экспортируем изображения
+        const imageMap = new Map();
+        const imageDataMap = new Map();
+        let exportedImages = 0;
+        const totalImages = content.statistics.images || 0;
+        
+        if (totalImages > 0) {
+          for (const item of content.items) {
+            if (item.type === 'image' && item.imageHash) {
+              exportedImages++;
+              figma.ui.postMessage({
+                type: 'markdown-export-progress',
+                message: `Экспорт изображения ${exportedImages}/${totalImages}...`,
+                percent: 30 + Math.round((exportedImages / totalImages) * 40)
+              });
+              
+              const imageData = await exportImageFromFigma(item.imageHash, item.id);
+              if (imageData) {
+                const filename = `figma-assets/image-${item.id.slice(0, 8)}.png`;
+                imageMap.set(item.imageHash, filename);
+                // Конвертируем Uint8Array в массив для передачи через postMessage
+                imageDataMap.set(item.imageHash, Array.from(imageData));
+              }
+            }
+          }
+        } else {
+          figma.ui.postMessage({
+            type: 'markdown-export-progress',
+            message: 'Изображения не найдены',
+            percent: 70
+          });
+        }
+        
+        figma.ui.postMessage({
+          type: 'markdown-export-progress',
+          message: 'Генерация Markdown...',
+          percent: 80
+        });
+        
+        figma.ui.postMessage({
+          type: 'markdown-export-progress',
+          message: 'Генерация Markdown и JSON...',
+          percent: 85
+        });
+        
+        // Генерируем Markdown с настройками из UI
+        const markdownOptions = {
+          useIndentation: msg.settings ? (msg.settings.useIndentation !== false) : true // По умолчанию true
+        };
+        
+        const markdown = generateMarkdown(content, imageMap, markdownOptions);
+        
+        // Генерируем JSON
+        const jsonContent = generateJSON(content, imageMap);
+        
+        figma.ui.postMessage({
+          type: 'markdown-export-progress',
+          message: 'Готово!',
+          percent: 100
+        });
+        
+        // Небольшая задержка для показа прогресса
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        figma.ui.postMessage({
+          type: 'markdown-export-result',
+          success: true,
+          data: {
+            markdown: markdown,
+            json: jsonContent,
+            images: Array.from(imageDataMap.entries()).map(([hash, data]) => ({
+              hash: hash,
+              filename: imageMap.get(hash),
+              data: data
+            })),
+            pageName: content.pageName
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка при экспорте в Markdown:', error);
+        figma.ui.postMessage({
+          type: 'markdown-export-result',
+          success: false,
+          error: error.message || 'Не удалось экспортировать в Markdown'
         });
       }
     } else if (msg.type === 'close-plugin') {
@@ -5621,4 +5816,754 @@ function toFlat(v) {
 function toCSV(rows) {
   const esc = (s) => '"' + String(s).replace(/"/g, '""') + '"';
   return rows.map(r => r.map(esc).join(',')).join('\n');
+}
+
+/**
+ * Рекурсивно собирает весь текст из узла и его дочерних элементов
+ * @param {SceneNode} node - Узел для обработки
+ * @returns {Array} Массив объектов с текстом и метаданными
+ */
+function extractTextFromNode(node) {
+  const textItems = [];
+  
+  // Если узел является текстовым, добавляем его текст
+  if (node.type === 'TEXT') {
+    try {
+      textItems.push({
+        id: node.id,
+        name: node.name,
+        text: node.characters,
+        fontSize: node.fontSize,
+        fontName: node.fontName ? {
+          family: node.fontName.family,
+          style: node.fontName.style
+        } : null,
+        position: {
+          x: node.x || 0,
+          y: node.y || 0
+        },
+        width: node.width || 0,
+        height: node.height || 0
+      });
+    } catch (error) {
+      console.warn(`Ошибка при чтении текста из узла ${node.name}:`, error);
+    }
+  }
+  
+  // Рекурсивно обрабатываем дочерние элементы
+  if ('children' in node) {
+    for (const child of node.children) {
+      // Пропускаем скрытые узлы (опционально)
+      if (!child.visible) continue;
+      
+      const childTextItems = extractTextFromNode(child);
+      textItems.push(...childTextItems);
+    }
+  }
+  
+  return textItems;
+}
+
+/**
+ * Получает весь текст с текущей страницы
+ * @param {boolean} includeHidden - Включать ли скрытые элементы
+ * @returns {Object} Объект с массивом текстовых элементов и общей статистикой
+ */
+function getAllTextFromPage(includeHidden = false) {
+  const currentPage = figma.currentPage;
+  const allTextItems = [];
+  
+  // Обходим все узлы на странице
+  for (const node of currentPage.children) {
+    // Пропускаем скрытые узлы, если нужно
+    if (!includeHidden && !node.visible) continue;
+    
+    const textItems = extractTextFromNode(node);
+    allTextItems.push(...textItems);
+  }
+  
+  // Собираем весь текст в одну строку
+  const allText = allTextItems.map(item => item.text).join('\n');
+  
+  return {
+    totalNodes: allTextItems.length,
+    allText: allText,
+    items: allTextItems,
+    statistics: {
+      totalCharacters: allText.length,
+      uniqueNodes: allTextItems.length,
+      avgLength: allTextItems.length > 0 
+        ? Math.round(allText.length / allTextItems.length) 
+        : 0
+    }
+  };
+}
+
+// Настройки компонентов для экспорта Markdown
+let markdownExportSettings = {
+  // Названия блоков документации
+  documentationBlocks: ['Overview', 'A11Y'],
+  
+  // Название компонента заголовка
+  headingComponentName: 'sourse-heading',
+  
+  // Название компонента текста
+  textComponentName: 'sourse-base',
+  
+  // Название фрейма с изображениями
+  previewFrameName: 'Preview',
+  
+  // Маппинг размера заголовка на уровень h1-h4
+  headingSizeMapping: {
+    'lg': 1, // H1
+    'md': 2, // H2
+    'sm': 3, // H3
+    'xs': 4  // H4
+  },
+  
+  // Компоненты, которые нужно исключить из экспорта
+  excludedComponents: ['sourse-Info']
+};
+
+/**
+ * Проверяет, является ли узел компонентом с заданным именем
+ * @param {SceneNode} node - Узел для проверки
+ * @param {string} componentName - Имя компонента для поиска
+ * @returns {Promise<boolean>} true если это нужный компонент
+ */
+async function isComponentInstance(node, componentName) {
+  if (node.type !== 'INSTANCE') return false;
+  
+  try {
+    const mainComponent = await node.getMainComponentAsync();
+    if (!mainComponent) return false;
+    
+    const mainComponentName = mainComponent.name.toLowerCase();
+    const searchName = componentName.toLowerCase();
+    
+    return mainComponentName === searchName || mainComponentName.includes(searchName);
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Проверяет, является ли узел исключенным компонентом
+ * @param {SceneNode} node - Узел для проверки
+ * @param {Array<string>} excludedComponents - Массив имен исключенных компонентов
+ * @returns {Promise<boolean>} true если компонент нужно исключить
+ */
+async function isExcludedComponent(node, excludedComponents) {
+  if (!excludedComponents || excludedComponents.length === 0) return false;
+  if (node.type !== 'INSTANCE') {
+    // Проверяем имя узла напрямую для не-INSTANCE узлов
+    const nodeName = (node.name || '').toLowerCase();
+    return excludedComponents.some(excluded => {
+      const excludedName = excluded.toLowerCase();
+      return nodeName === excludedName || nodeName.includes(excludedName);
+    });
+  }
+  
+  try {
+    const mainComponent = await node.getMainComponentAsync();
+    if (!mainComponent) {
+      // Если нет mainComponent, проверяем имя узла
+      const nodeName = (node.name || '').toLowerCase();
+      return excludedComponents.some(excluded => {
+        const excludedName = excluded.toLowerCase();
+        return nodeName === excludedName || nodeName.includes(excludedName);
+      });
+    }
+    
+    const mainComponentName = mainComponent.name.toLowerCase();
+    return excludedComponents.some(excluded => {
+      const excludedName = excluded.toLowerCase();
+      return mainComponentName === excludedName || mainComponentName.includes(excludedName);
+    });
+  } catch (error) {
+    // В случае ошибки проверяем имя узла
+    const nodeName = (node.name || '').toLowerCase();
+    return excludedComponents.some(excluded => {
+      const excludedName = excluded.toLowerCase();
+      return nodeName === excludedName || nodeName.includes(excludedName);
+    });
+  }
+}
+
+/**
+ * Проверяет, находится ли узел внутри исключенного компонента (проверяет цепочку родителей)
+ * @param {SceneNode} node - Узел для проверки
+ * @param {Array<string>} excludedComponents - Массив имен исключенных компонентов
+ * @returns {Promise<boolean>} true если узел находится внутри исключенного компонента
+ */
+async function isInsideExcludedComponent(node, excludedComponents) {
+  if (!excludedComponents || excludedComponents.length === 0) return false;
+  if (!node || !node.parent) return false;
+  
+  // Проверяем цепочку родителей
+  let currentParent = node.parent;
+  while (currentParent) {
+    const isExcluded = await isExcludedComponent(currentParent, excludedComponents);
+    if (isExcluded) {
+      return true;
+    }
+    currentParent = currentParent.parent;
+  }
+  
+  return false;
+}
+
+/**
+ * Получает свойство компонента по имени
+ * @param {InstanceNode} node - Instance узел
+ * @param {string} propName - Имя свойства
+ * @returns {string|null} Значение свойства или null
+ */
+function getComponentProperty(node, propName) {
+  if (node.type !== 'INSTANCE' || !node.componentProperties) return null;
+  
+  const prop = node.componentProperties[propName];
+  if (!prop) return null;
+  
+  // Возвращаем строковое значение свойства
+  if (typeof prop === 'string') return prop;
+  if (typeof prop === 'object' && prop.value) return String(prop.value);
+  return String(prop);
+}
+
+/**
+ * Определяет уровень заголовка на основе компонента sourse-heading и его props
+ * @param {InstanceNode} node - Instance узел компонента
+ * @param {TextNode} textNode - Текстовый узел внутри компонента
+ * @returns {number|null} Уровень заголовка (1-4) или null
+ */
+async function detectHeadingLevelFromComponent(node, textNode) {
+  // Проверяем, является ли это компонентом sourse-heading
+  const isHeadingComponent = await isComponentInstance(node, markdownExportSettings.headingComponentName);
+  if (!isHeadingComponent) return null;
+  
+  // Получаем свойство size
+  const size = getComponentProperty(node, 'size');
+  if (!size) return null;
+  
+  const sizeLower = size.toLowerCase();
+  const mapping = markdownExportSettings.headingSizeMapping;
+  
+  // Маппинг размера на уровень заголовка
+  if (sizeLower === 'lg') return mapping.lg || 1;
+  if (sizeLower === 'md') return mapping.md || 2;
+  if (sizeLower === 'sm') return mapping.sm || 3;
+  if (sizeLower === 'xs') return mapping.xs || 4;
+  
+  return null;
+}
+
+/**
+ * Определяет уровень заголовка на основе размера шрифта и стиля
+ * @param {TextNode} node - Текстовый узел
+ * @param {SceneNode} parentNode - Родительский узел (для проверки компонента)
+ * @returns {Promise<number|null>} Уровень заголовка (1-6) или null для обычного текста
+ */
+async function detectHeadingLevel(node, parentNode = null) {
+  if (node.type !== 'TEXT') return null;
+  
+  // Сначала проверяем, не является ли родитель компонентом sourse-heading
+  if (parentNode && parentNode.type === 'INSTANCE') {
+    const componentLevel = await detectHeadingLevelFromComponent(parentNode, node);
+    if (componentLevel !== null) {
+      return componentLevel;
+    }
+  }
+  
+  const fontSize = node.fontSize || 0;
+  const fontName = node.fontName;
+  const nodeName = node.name.toLowerCase();
+  
+  // Проверяем имя узла на наличие ключевых слов заголовков
+  if (nodeName.includes('h1') || nodeName.includes('heading-1') || nodeName.includes('заголовок-1') || nodeName.includes('title-1')) {
+    return 1;
+  }
+  if (nodeName.includes('h2') || nodeName.includes('heading-2') || nodeName.includes('заголовок-2') || nodeName.includes('title-2')) {
+    return 2;
+  }
+  if (nodeName.includes('h3') || nodeName.includes('heading-3') || nodeName.includes('заголовок-3') || nodeName.includes('title-3')) {
+    return 3;
+  }
+  if (nodeName.includes('h4') || nodeName.includes('heading-4') || nodeName.includes('заголовок-4') || nodeName.includes('title-4')) {
+    return 4;
+  }
+  if (nodeName.includes('h5') || nodeName.includes('heading-5') || nodeName.includes('заголовок-5') || nodeName.includes('title-5')) {
+    return 5;
+  }
+  if (nodeName.includes('h6') || nodeName.includes('heading-6') || nodeName.includes('заголовок-6') || nodeName.includes('title-6')) {
+    return 6;
+  }
+  
+  // Определяем по размеру шрифта (можно настроить под вашу дизайн-систему)
+  if (fontSize >= 32) return 1;
+  if (fontSize >= 24) return 2;
+  if (fontSize >= 20) return 3;
+  if (fontSize >= 18) return 4;
+  if (fontSize >= 16) return 5;
+  if (fontSize >= 14) return 6;
+  
+  return null; // Обычный текст
+}
+
+/**
+ * Проверяет, является ли узел блоком документации (Overview, A11Y)
+ * @param {SceneNode} node - Узел для проверки
+ * @returns {boolean} true если это блок документации
+ */
+function isDocumentationBlock(node) {
+  const nodeName = node.name || '';
+  return markdownExportSettings.documentationBlocks.some(blockName => 
+    nodeName === blockName || nodeName.includes(blockName)
+  );
+}
+
+/**
+ * Проверяет, является ли фрейм фреймом Preview
+ * @param {SceneNode} node - Узел для проверки
+ * @returns {boolean} true если это фрейм Preview
+ */
+function isPreviewFrame(node) {
+  const nodeName = (node.name || '').toLowerCase();
+  const previewName = markdownExportSettings.previewFrameName.toLowerCase();
+  return nodeName === previewName || nodeName.includes(previewName);
+}
+
+/**
+ * Рекурсивно собирает структурированный контент из узла с сохранением порядка
+ * @param {SceneNode} node - Узел для обработки
+ * @param {Object} options - Опции (includeHidden, extractImages)
+ * @param {number} depth - Глубина вложенности
+ * @param {string|null} parentId - ID родителя
+ * @returns {Promise<Array>} Массив объектов с контентом
+ */
+async function extractStructuredContent(node, options = {}, depth = 0, parentId = null) {
+  const { includeHidden = false, extractImages = false, excludedComponents = [] } = options;
+  const content = [];
+  
+  if (!includeHidden && !node.visible) return content;
+  
+  // Проверяем, не является ли узел исключенным компонентом
+  const isExcluded = await isExcludedComponent(node, excludedComponents);
+  if (isExcluded) {
+    console.log(`Пропущен исключенный компонент: ${node.name}`);
+    return content; // Пропускаем этот узел и его дочерние элементы
+  }
+  
+  // Обработка текстовых узлов
+  if (node.type === 'TEXT') {
+    try {
+      // Сначала проверяем, не находится ли текст внутри исключенного компонента
+      const isInsideExcluded = await isInsideExcludedComponent(node, excludedComponents);
+      if (isInsideExcluded) {
+        console.log(`Пропущен текст внутри исключенного компонента: ${node.name}`);
+        return content; // Пропускаем этот текст
+      }
+      
+      // Проверяем, не является ли родитель компонентом sourse-heading или sourse-base
+      // Если да, то этот текст уже будет обработан при обработке компонента
+      const parent = node.parent;
+      if (parent && parent.type === 'INSTANCE') {
+        const isHeadingComponent = await isComponentInstance(parent, markdownExportSettings.headingComponentName);
+        const isTextComponent = await isComponentInstance(parent, markdownExportSettings.textComponentName);
+        
+        // Пропускаем обработку, если родитель - это компонент заголовка или текста
+        if (isHeadingComponent || isTextComponent) {
+          // Этот текст будет обработан при обработке компонента
+          // Просто продолжаем рекурсивный обход дочерних элементов
+        } else {
+          // Родитель не является компонентом, обрабатываем текст напрямую
+          const headingLevel = await detectHeadingLevel(node, parent);
+          
+          content.push({
+            type: headingLevel ? 'heading' : 'text',
+            level: headingLevel,
+            text: node.characters,
+            id: node.id,
+            name: node.name,
+            depth: depth,
+            parentId: parentId || (parent ? parent.id : null),
+            nodeType: node.type,
+            fontSize: node.fontSize,
+            fontName: node.fontName ? {
+              family: node.fontName.family,
+              style: node.fontName.style
+            } : null,
+            position: { x: node.x || 0, y: node.y || 0 },
+            width: node.width || 0,
+            height: node.height || 0
+          });
+        }
+      } else {
+        // Родитель не является INSTANCE, обрабатываем текст напрямую
+        const headingLevel = await detectHeadingLevel(node, parent);
+        
+        content.push({
+          type: headingLevel ? 'heading' : 'text',
+          level: headingLevel,
+          text: node.characters,
+          id: node.id,
+          name: node.name,
+          depth: depth,
+          parentId: parentId || (parent ? parent.id : null),
+          nodeType: node.type,
+          fontSize: node.fontSize,
+          fontName: node.fontName ? {
+            family: node.fontName.family,
+            style: node.fontName.style
+          } : null,
+          position: { x: node.x || 0, y: node.y || 0 },
+          width: node.width || 0,
+          height: node.height || 0
+        });
+      }
+    } catch (error) {
+      console.warn(`Ошибка при чтении текста из узла ${node.name}:`, error);
+    }
+  }
+  
+  // Обработка компонентов sourse-heading и sourse-base
+  let skipRecursiveProcessing = false;
+  if (node.type === 'INSTANCE') {
+    try {
+      // Проверяем, не находится ли компонент внутри исключенного компонента
+      const isInsideExcluded = await isInsideExcludedComponent(node, excludedComponents);
+      if (isInsideExcluded) {
+        console.log(`Пропущен компонент внутри исключенного: ${node.name}`);
+        return content; // Пропускаем этот компонент
+      }
+      
+      const isHeadingComponent = await isComponentInstance(node, markdownExportSettings.headingComponentName);
+      const isTextComponent = await isComponentInstance(node, markdownExportSettings.textComponentName);
+      
+      if (isHeadingComponent || isTextComponent) {
+        skipRecursiveProcessing = true; // Не обрабатываем дочерние элементы рекурсивно
+        
+        // Ищем текстовый узел внутри компонента
+        const textNodes = node.findAll(n => n.type === 'TEXT');
+        for (const textNode of textNodes) {
+          if (isHeadingComponent) {
+            const headingLevel = await detectHeadingLevelFromComponent(node, textNode);
+            if (headingLevel !== null) {
+              content.push({
+                type: 'heading',
+                level: headingLevel,
+                text: textNode.characters,
+                id: textNode.id,
+                name: textNode.name || node.name,
+                depth: depth,
+                parentId: parentId,
+                nodeType: 'INSTANCE',
+                componentName: markdownExportSettings.headingComponentName,
+                componentSize: getComponentProperty(node, 'size'),
+                position: { x: node.x || 0, y: node.y || 0 },
+                width: node.width || 0,
+                height: node.height || 0
+              });
+            }
+          } else if (isTextComponent) {
+            content.push({
+              type: 'text',
+              level: null,
+              text: textNode.characters,
+              id: textNode.id,
+              name: textNode.name || node.name,
+              depth: depth,
+              parentId: parentId,
+              nodeType: 'INSTANCE',
+              componentName: markdownExportSettings.textComponentName,
+              position: { x: node.x || 0, y: node.y || 0 },
+              width: node.width || 0,
+              height: node.height || 0
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Ошибка при обработке компонента ${node.name}:`, error);
+    }
+  }
+  
+  // Обработка изображений
+  if (extractImages) {
+    try {
+      // Проверяем, не находится ли изображение внутри исключенного компонента
+      const isInsideExcluded = await isInsideExcludedComponent(node, excludedComponents);
+      if (isInsideExcluded) {
+        console.log(`Пропущено изображение внутри исключенного компонента: ${node.name}`);
+        // Пропускаем обработку изображения
+      } else {
+        // Проверяем, находимся ли мы внутри фрейма Preview
+        let isInPreview = false;
+        let currentParent = node.parent;
+        while (currentParent) {
+          if (isPreviewFrame(currentParent)) {
+            isInPreview = true;
+            break;
+          }
+          currentParent = currentParent.parent;
+        }
+        
+        // Проверяем fills для узлов с заливкой
+        if (node.fills && Array.isArray(node.fills)) {
+          const imageFill = node.fills.find(fill => fill.type === 'IMAGE');
+          if (imageFill && imageFill.imageHash && isInPreview) {
+            content.push({
+              type: 'image',
+              id: node.id,
+              name: node.name || 'Image',
+              imageHash: imageFill.imageHash,
+              depth: depth,
+              parentId: parentId,
+              nodeType: node.type,
+              position: { x: node.x || 0, y: node.y || 0 },
+              width: node.width || 0,
+              height: node.height || 0
+            });
+          }
+        }
+        
+        // Проверяем для VECTOR узлов с изображениями
+        if (node.type === 'VECTOR' && node.fills && Array.isArray(node.fills)) {
+          const imageFill = node.fills.find(fill => fill.type === 'IMAGE');
+          if (imageFill && imageFill.imageHash && isInPreview) {
+            content.push({
+              type: 'image',
+              id: node.id,
+              name: node.name || 'Image',
+              imageHash: imageFill.imageHash,
+              depth: depth,
+              parentId: parentId,
+              nodeType: node.type,
+              position: { x: node.x || 0, y: node.y || 0 },
+              width: node.width || 0,
+              height: node.height || 0
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Ошибка при обработке изображения из узла ${node.name}:`, error);
+    }
+  }
+  
+  // Рекурсивно обрабатываем дочерние элементы В ТОМ ПОРЯДКЕ, в котором они идут
+  // НО пропускаем рекурсивную обработку для компонентов sourse-heading и sourse-base,
+  // так как их дочерние элементы уже обработаны выше
+  if (!skipRecursiveProcessing && 'children' in node) {
+    for (const child of node.children) {
+      const childContent = await extractStructuredContent(child, options, depth + 1, node.id);
+      content.push(...childContent);
+    }
+  }
+  
+  return content;
+}
+
+/**
+ * Получает структурированный контент со страницы с сохранением порядка слоев
+ * @param {Object} options - Опции экспорта
+ * @returns {Promise<Object>} Объект с структурированным контентом
+ */
+async function getStructuredPageContent(options = {}) {
+  const {
+    includeHidden = false,
+    extractImages = false,
+    onlyDocumentationBlocks = true, // По умолчанию только блоки Overview и A11Y
+    excludedComponents = []
+  } = options;
+  
+  const currentPage = figma.currentPage;
+  const allContent = [];
+  
+  console.log('getStructuredPageContent: Начинаем сбор контента');
+  console.log('  - onlyDocumentationBlocks:', onlyDocumentationBlocks);
+  console.log('  - documentationBlocks:', markdownExportSettings.documentationBlocks);
+  
+  // Обходим все узлы на странице В ТОМ ПОРЯДКЕ, в котором они идут
+  for (const node of currentPage.children) {
+    // Если включен фильтр только блоков документации, проверяем имя узла
+    if (onlyDocumentationBlocks) {
+      if (!isDocumentationBlock(node)) {
+        console.log(`  - Пропущен узел "${node.name}" (не является блоком документации)`);
+        continue;
+      }
+      console.log(`  - Обрабатываем блок документации: "${node.name}"`);
+    }
+    
+    const content = await extractStructuredContent(node, { 
+      includeHidden, 
+      extractImages,
+      excludedComponents: excludedComponents.length > 0 ? excludedComponents : markdownExportSettings.excludedComponents || []
+    }, 0, null);
+    allContent.push(...content);
+  }
+  
+  console.log(`getStructuredPageContent: Собрано элементов: ${allContent.length}`);
+  
+  // НЕ сортируем! Сохраняем порядок как в Figma
+  
+  return {
+    pageName: currentPage.name,
+    items: allContent,
+    statistics: {
+      totalItems: allContent.length,
+      headings: allContent.filter(item => item.type === 'heading').length,
+      text: allContent.filter(item => item.type === 'text').length,
+      images: allContent.filter(item => item.type === 'image').length,
+      maxDepth: Math.max(...allContent.map(item => item.depth || 0), 0)
+    }
+  };
+}
+
+/**
+ * Экспортирует изображение из Figma
+ * @param {string} imageHash - Хеш изображения
+ * @param {string} nodeId - ID узла
+ * @returns {Promise<Uint8Array|null>} Данные изображения
+ */
+async function exportImageFromFigma(imageHash, nodeId) {
+  try {
+    const image = figma.getImageByHash(imageHash);
+    if (!image) {
+      console.warn(`Изображение не найдено: ${imageHash}`);
+      return null;
+    }
+    
+    // Экспортируем в PNG с высоким разрешением
+    const imageData = await image.getBytesAsync();
+    return imageData;
+  } catch (error) {
+    console.error(`Ошибка при экспорте изображения ${imageHash}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Нормализует пробельные символы в тексте
+ * Заменяет неразрывные пробелы и специальные пробельные символы на обычные пробелы
+ * @param {string} text - Текст для нормализации
+ * @returns {string} Нормализованный текст
+ */
+function normalizeWhitespace(text) {
+  if (!text) return '';
+  // Заменяем все неразрывные пробелы и специальные пробельные символы на обычные пробелы
+  return text.replace(/[\u00A0\u2000-\u200F\u2028-\u202F\uFEFF]/g, ' ');
+}
+
+/**
+ * Экранирует markdown-символы в тексте
+ * @param {string} text - Текст для экранирования
+ * @returns {string} Экранированный текст
+ */
+function escapeMarkdown(text) {
+  if (!text) return '';
+  // Экранируем символы, которые могут интерпретироваться как markdown
+  // Сначала обрабатываем двойные звездочки для жирного текста
+  let escaped = text.replace(/\*\*/g, '\\*\\*');
+  // Затем экранируем одиночные звездочки, которые не являются частью двойных
+  escaped = escaped.replace(/\*(?!\*)/g, '\\*');
+  // Экранируем остальные markdown-символы
+  // НЕ экранируем [ ] ( ) - они используются только в ссылках и не мешают в обычном тексте
+  return escaped
+    .replace(/`/g, '\\`')          // Код
+    .replace(/_/g, '\\_')          // Подчеркивание/курсив (только если не в паре для курсива)
+    .replace(/~/g, '\\~')          // Зачеркивание
+    .replace(/#/g, '\\#');         // Заголовки (только если не в начале строки)
+}
+
+/**
+ * Генерирует Markdown из структурированного контента с учетом вложенности
+ * @param {Object} content - Структурированный контент
+ * @param {Map} images - Map с изображениями (imageHash -> filename)
+ * @param {Object} options - Опции генерации (useIndentation)
+ * @returns {string} Markdown текст
+ */
+function generateMarkdown(content, images = new Map(), options = {}) {
+  let markdown = `# ${content.pageName}\n\n`;
+  
+  for (const item of content.items) {
+    if (item.type === 'heading') {
+      const hashes = '#'.repeat(item.level);
+      // Нормализуем пробелы и экранируем markdown-символы
+      const normalizedText = normalizeWhitespace(item.text.trim());
+      const escapedText = escapeMarkdown(normalizedText);
+      markdown += `${hashes} ${escapedText}\n\n`;
+    } else if (item.type === 'text') {
+      // Обрабатываем многострочный текст
+      const text = item.text.trim();
+      if (text) {
+        // Нормализуем пробелы
+        const normalizedText = normalizeWhitespace(text);
+        // Разбиваем на абзацы по переносам строк и убираем отступы
+        const paragraphs = normalizedText.split('\n').map(p => {
+          const trimmed = p.trim();
+          return trimmed ? escapeMarkdown(trimmed) : '';
+        }).filter(p => p);
+        if (paragraphs.length > 0) {
+          markdown += paragraphs.join('\n\n') + '\n\n';
+        }
+      }
+    } else if (item.type === 'image') {
+      const filename = images.get(item.imageHash) || `image-${item.id.slice(0, 8)}.png`;
+      // Убираем путь папки для ссылки в Markdown
+      const imagePath = filename.includes('/') ? filename.split('/').pop() : filename;
+      markdown += `![${item.name || 'Image'}](${imagePath})\n\n`;
+    }
+  }
+  
+  return markdown.trim() + '\n';
+}
+
+/**
+ * Генерирует JSON из структурированного контента
+ * @param {Object} content - Структурированный контент
+ * @param {Map} images - Map с изображениями (imageHash -> filename)
+ * @returns {string} JSON строка
+ */
+function generateJSON(content, images = new Map()) {
+  const jsonData = {
+    pageName: content.pageName,
+    exportedAt: new Date().toISOString(),
+    statistics: content.statistics,
+    items: content.items.map(item => {
+      const itemData = {
+        type: item.type,
+        id: item.id,
+        name: item.name,
+        depth: item.depth || 0,
+        parentId: item.parentId || null,
+        nodeType: item.nodeType || null,
+        position: item.position,
+        width: item.width,
+        height: item.height
+      };
+      
+      if (item.type === 'heading') {
+        itemData.level = item.level;
+        itemData.text = item.text;
+        if (item.componentName) {
+          itemData.componentName = item.componentName;
+          itemData.componentSize = item.componentSize;
+        }
+      } else if (item.type === 'text') {
+        itemData.text = item.text;
+        if (item.componentName) {
+          itemData.componentName = item.componentName;
+        }
+      } else if (item.type === 'image') {
+        const filename = images.get(item.imageHash) || `image-${item.id.slice(0, 8)}.png`;
+        itemData.imageHash = item.imageHash;
+        itemData.filename = filename.includes('/') ? filename.split('/').pop() : filename;
+      }
+      
+      return itemData;
+    })
+  };
+  
+  return JSON.stringify(jsonData, null, 2);
 }

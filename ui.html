@@ -2015,6 +2015,127 @@
       </div>
     </div>
 
+    <!-- Get Page Text Section -->
+    <div id="get-page-text-section" class="get-page-text-section">
+      <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 16px; line-height: 1.5;">
+        Получить весь текст с текущей страницы Figma. Функция автоматически обходит все видимые элементы и извлекает текстовое содержимое с сохранением структуры слоев.
+      </div>
+      
+      <!-- Настройки экспорта -->
+      <details style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+        <summary style="font-size: 12px; font-weight: 600; color: #FFFFFF; cursor: pointer; user-select: none;">
+          ⚙️ Настройки экспорта
+        </summary>
+        <div style="margin-top: 12px; font-size: 11px;">
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Блоки документации (через запятую):</label>
+            <input type="text" id="md-doc-blocks" value="Overview, A11Y" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Компонент заголовка:</label>
+            <input type="text" id="md-heading-component" value="sourse-heading" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Компонент текста:</label>
+            <input type="text" id="md-text-component" value="sourse-base" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Фрейм с изображениями:</label>
+            <input type="text" id="md-preview-frame" value="Preview" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+          </div>
+          
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; color: #AAAAAA; margin-bottom: 8px;">Маппинг размера заголовков:</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10px;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: #AAAAAA;">lg →</span>
+                <input type="number" id="md-size-lg" value="1" min="1" max="6" style="width: 50px; background: #34343C; border: 1px solid #505059; border-radius: 4px; padding: 4px; color: white; font-size: 10px;">
+                <span style="color: #888888;">(H1)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: #AAAAAA;">md →</span>
+                <input type="number" id="md-size-md" value="2" min="1" max="6" style="width: 50px; background: #34343C; border: 1px solid #505059; border-radius: 4px; padding: 4px; color: white; font-size: 10px;">
+                <span style="color: #888888;">(H2)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: #AAAAAA;">sm →</span>
+                <input type="number" id="md-size-sm" value="3" min="1" max="6" style="width: 50px; background: #34343C; border: 1px solid #505059; border-radius: 4px; padding: 4px; color: white; font-size: 10px;">
+                <span style="color: #888888;">(H3)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="color: #AAAAAA;">xs →</span>
+                <input type="number" id="md-size-xs" value="4" min="1" max="6" style="width: 50px; background: #34343C; border: 1px solid #505059; border-radius: 4px; padding: 4px; color: white; font-size: 10px;">
+                <span style="color: #888888;">(H4)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <label style="display: flex; align-items: center; color: #AAAAAA; font-size: 11px;">
+              <input type="checkbox" id="md-use-indentation" checked style="margin-right: 6px;">
+              Использовать отступы для вложенности
+            </label>
+          </div>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <label style="display: flex; align-items: center; color: #AAAAAA; font-size: 11px;">
+              <input type="checkbox" id="md-only-doc-blocks" checked style="margin-right: 6px;">
+              Только блоки документации
+            </label>
+          </div>
+          
+          <div style="margin-bottom: 12px; padding-top: 12px; border-top: 1px solid #505059;">
+            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Исключить компоненты (через запятую):</label>
+            <input type="text" id="md-excluded-components" value="sourse-Info" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;" placeholder="sourse-Info, другой-компонент">
+            <div style="font-size: 10px; color: #888888; margin-top: 4px;">Компоненты и узлы с этими именами будут пропущены при экспорте</div>
+          </div>
+        </div>
+      </details>
+      
+      <button id="get-text-button" class="primary-button" style="width: 100%; margin-bottom: 8px;">📄 Получить текст со страницы</button>
+      <button id="get-page-export-markdown-button" class="primary-button" style="width: 100%; margin-bottom: 16px; background: #4CAF50;">📝 Экспорт в Markdown + JSON</button>
+      
+      <!-- Статистика -->
+      <div id="text-stats-section" style="background: #2A2A32; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: none;">
+        <div style="font-size: 12px; font-weight: 600; color: #FFFFFF; margin-bottom: 12px;">
+          📊 Статистика
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #AAAAAA;">Текстовых элементов:</span>
+            <span id="text-total-nodes" style="color: #FFFFFF; font-weight: 600;">0</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #AAAAAA;">Всего символов:</span>
+            <span id="text-total-chars" style="color: #FFFFFF; font-weight: 600;">0</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Область вывода текста -->
+      <div id="text-output-container" style="background: #2A2A32; border-radius: 8px; padding: 12px; max-height: 450px; overflow-y: auto; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: #FFFFFF; font-family: 'Courier New', monospace; min-height: 100px; display: none;">
+        <!-- Текст будет выведен здесь -->
+      </div>
+      
+      <!-- Кнопки действий -->
+      <div id="text-actions-section" style="display: none; margin-top: 12px; display: flex; gap: 8px;">
+        <button id="copy-text-button" class="secondary-button" style="flex: 1;">📋 Копировать</button>
+        <button id="download-text-button" class="secondary-button" style="flex: 1;">💾 Скачать</button>
+      </div>
+      
+      <!-- Индикатор загрузки -->
+      <div id="text-loading-indicator" style="display: none; text-align: center; padding: 20px; color: #AAAAAA; font-size: 12px;">
+        ⏳ Загрузка текста со страницы...
+      </div>
+      
+      <!-- Индикатор экспорта Markdown -->
+      <div id="markdown-export-progress" style="display: none; background: #2A2A32; border-radius: 8px; padding: 16px; margin-top: 16px;">
+        <div style="text-align: center; color: #AAAAAA; font-size: 12px; margin-bottom: 8px;" id="markdown-progress-text">⏳ Экспорт в Markdown...</div>
+        <div style="background: #1A1A1A; border-radius: 4px; height: 4px; overflow: hidden;">
+          <div id="markdown-progress-bar" style="background: #4CAF50; height: 100%; width: 0%; transition: width 0.3s;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- SVG Export Section -->
     <div id="svg-export-section" class="svg-export-section">
 
@@ -2451,6 +2572,158 @@
         }
       }, '*');
     });
+    
+    // Обработчики для получения текста со страницы (только если элементы существуют)
+    let getTextButton, textOutputContainer, textTotalNodes, textTotalChars, copyTextButton, downloadTextButton, textStatsSection, textActionsSection, textLoadingIndicator;
+    let currentText = '';
+    
+    function initGetPageTextHandlers() {
+      getTextButton = document.getElementById('get-text-button');
+      textOutputContainer = document.getElementById('text-output-container');
+      textTotalNodes = document.getElementById('text-total-nodes');
+      textTotalChars = document.getElementById('text-total-chars');
+      copyTextButton = document.getElementById('copy-text-button');
+      downloadTextButton = document.getElementById('download-text-button');
+      textStatsSection = document.getElementById('text-stats-section');
+      textActionsSection = document.getElementById('text-actions-section');
+      textLoadingIndicator = document.getElementById('text-loading-indicator');
+      const exportMarkdownButton = document.getElementById('get-page-export-markdown-button');
+      const markdownExportProgress = document.getElementById('markdown-export-progress');
+      
+      // Обработчик экспорта в Markdown (только для get-page-text секции)
+      if (exportMarkdownButton) {
+        console.log('Найдена кнопка экспорта в Markdown для get-page-text');
+        exportMarkdownButton.addEventListener('click', async () => {
+          console.log('Кнопка экспорта в Markdown нажата');
+          
+          if (markdownExportProgress) {
+            markdownExportProgress.style.display = 'block';
+            const progressText = document.getElementById('markdown-progress-text');
+            const progressBar = document.getElementById('markdown-progress-bar');
+            if (progressText) {
+              progressText.textContent = '⏳ Экспорт в Markdown...';
+              progressText.style.color = '#AAAAAA';
+            }
+            if (progressBar) progressBar.style.width = '0%';
+          }
+          
+          try {
+          // Получаем настройки из полей
+          const docBlocks = document.getElementById('md-doc-blocks').value.split(',').map(s => s.trim()).filter(s => s);
+          const headingComponent = document.getElementById('md-heading-component').value.trim();
+          const textComponent = document.getElementById('md-text-component').value.trim();
+          const previewFrame = document.getElementById('md-preview-frame').value.trim();
+          const useIndentation = document.getElementById('md-use-indentation').checked;
+          const onlyDocBlocks = document.getElementById('md-only-doc-blocks').checked;
+          
+          // Получаем настройки маппинга размеров заголовков
+          const sizeLg = parseInt(document.getElementById('md-size-lg').value) || 1;
+          const sizeMd = parseInt(document.getElementById('md-size-md').value) || 2;
+          const sizeSm = parseInt(document.getElementById('md-size-sm').value) || 3;
+          const sizeXs = parseInt(document.getElementById('md-size-xs').value) || 4;
+          
+          // Получаем список исключенных компонентов
+          const excludedComponentsInput = document.getElementById('md-excluded-components');
+          const excludedComponents = excludedComponentsInput ? 
+            excludedComponentsInput.value.split(',').map(s => s.trim()).filter(s => s) : 
+            ['sourse-Info'];
+          
+          parent.postMessage({
+            pluginMessage: {
+              type: 'export-to-markdown',
+              includeHidden: false,
+              settings: {
+                documentationBlocks: docBlocks,
+                headingComponentName: headingComponent,
+                textComponentName: textComponent,
+                previewFrameName: previewFrame,
+                headingSizeMapping: {
+                  lg: sizeLg,
+                  md: sizeMd,
+                  sm: sizeSm,
+                  xs: sizeXs
+                },
+                excludedComponents: excludedComponents,
+                useIndentation: useIndentation,
+                onlyDocumentationBlocks: onlyDocBlocks
+              }
+            }
+          }, '*');
+          } catch (error) {
+            console.error('Ошибка при отправке сообщения:', error);
+            alert('Ошибка при запуске экспорта: ' + error.message);
+          }
+        });
+      } else {
+        console.warn('Кнопка export-markdown-button не найдена');
+      }
+      
+      if (getTextButton) {
+        getTextButton.addEventListener('click', () => {
+          // Отправляем сообщение в плагин для получения текста
+          parent.postMessage({
+            pluginMessage: {
+              type: 'get-all-text-from-page',
+              includeHidden: false
+            }
+          }, '*');
+          
+          // Показываем индикатор загрузки
+          if (textLoadingIndicator) textLoadingIndicator.style.display = 'block';
+          if (textOutputContainer) {
+            textOutputContainer.style.display = 'none';
+          }
+          if (textStatsSection) textStatsSection.style.display = 'none';
+          if (textActionsSection) textActionsSection.style.display = 'none';
+        });
+      }
+      
+      if (copyTextButton) {
+        copyTextButton.addEventListener('click', () => {
+          if (!currentText) return;
+          
+          // Копируем текст в буфер обмена
+          navigator.clipboard.writeText(currentText).then(() => {
+            copyTextButton.textContent = '✓ Скопировано!';
+            setTimeout(() => {
+              copyTextButton.textContent = '📋 Копировать';
+            }, 2000);
+          }).catch(err => {
+            console.error('Ошибка при копировании:', err);
+            copyTextButton.textContent = '✗ Ошибка';
+            setTimeout(() => {
+              copyTextButton.textContent = '📋 Копировать';
+            }, 2000);
+          });
+        });
+      }
+      
+      if (downloadTextButton) {
+        downloadTextButton.addEventListener('click', () => {
+          if (!currentText) return;
+          
+          // Создаем blob и скачиваем
+          const blob = new Blob([currentText], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `figma-page-text-${new Date().toISOString().slice(0, 10)}.txt`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          downloadTextButton.textContent = '✓ Скачано!';
+          setTimeout(() => {
+            downloadTextButton.textContent = '💾 Скачать';
+          }, 2000);
+        });
+      }
+    }
+    
+    // Инициализируем обработчики при загрузке
+    initGetPageTextHandlers();
+    
 
     // Node ID Inspector элементы
     const getNodeIdButton = document.getElementById('get-node-id-button');
@@ -3360,11 +3633,13 @@ ${designSystemContext}
       const svgExportSection = document.getElementById('svg-export-section');
       const aiDesignLintSection = document.getElementById('ai-design-lint-section');
       const dsvSection = document.getElementById('design-system-validator-section');
+      const getPageTextSection = document.getElementById('get-page-text-section');
+      const componentPropertiesSection = document.querySelector('.component-properties-export-section');
       const headerTitle = document.querySelector('h1');
       const errorBadge = document.getElementById('error-badge');
       
       // Сбрасываем все режимы
-      body.classList.remove('node-id-mode', 'svg-export-mode', 'ai-design-lint-mode', 'design-system-validator-mode', 'component-properties-export-mode');
+      body.classList.remove('node-id-mode', 'svg-export-mode', 'ai-design-lint-mode', 'design-system-validator-mode', 'component-properties-export-mode', 'get-page-text-mode');
       
       if (mode === 'node-id-inspector') {
         // Режим Node ID Inspector
@@ -3537,6 +3812,51 @@ ${designSystemContext}
         
         // Инициализируем обработчики для Design System Validator
         initDesignSystemValidator();
+      } else if (mode === 'get-page-text') {
+        // Режим получения текста со страницы
+        body.classList.add('get-page-text-mode');
+        
+        // Скрываем основную функциональность
+        mainFunctionality.forEach(el => {
+          if (el) el.style.display = 'none';
+        });
+        
+        // Скрываем другие секции
+        if (nodeIdSection) {
+          nodeIdSection.style.display = 'none';
+        }
+        
+        if (svgExportSection) {
+          svgExportSection.style.display = 'none';
+        }
+        
+        if (aiDesignLintSection) {
+          aiDesignLintSection.style.display = 'none';
+        }
+        
+        if (dsvSection) {
+          dsvSection.style.display = 'none';
+        }
+        
+        if (componentPropertiesSection) {
+          componentPropertiesSection.style.display = 'none';
+        }
+        
+        // Показываем Get Page Text Section
+        if (getPageTextSection) {
+          getPageTextSection.style.display = 'block';
+          getPageTextSection.style.marginBottom = '0';
+        }
+        
+        // Меняем заголовок
+        if (headerTitle) {
+          headerTitle.innerHTML = 'Orbita DS&nbsp;&nbsp;✦&nbsp;&nbsp;Get Page Text';
+        }
+        
+        // Скрываем badge с ошибками
+        if (errorBadge) {
+          errorBadge.style.display = 'none';
+        }
       } else {
         // Режим проверки иконок (по умолчанию)
         
@@ -3560,6 +3880,14 @@ ${designSystemContext}
         
         if (dsvSection) {
           dsvSection.style.display = 'none';
+        }
+        
+        if (getPageTextSection) {
+          getPageTextSection.style.display = 'none';
+        }
+        
+        if (componentPropertiesSection) {
+          componentPropertiesSection.style.display = 'none';
         }
         
         // Восстанавливаем оригинальный заголовок
@@ -4101,6 +4429,11 @@ ${designSystemContext}
       
       const message = event.data.pluginMessage;
       
+      // Логируем все сообщения для отладки
+      if (message.type === 'markdown-export-progress' || message.type === 'markdown-export-result') {
+        console.log('Получено сообщение от плагина:', message.type, message);
+      }
+      
       if (!message || !message.type) {
         debugWarn('Получено сообщение без типа:', message);
         return;
@@ -4198,6 +4531,173 @@ ${designSystemContext}
                 exportRemainingTime.textContent = `Осталось: ~${estimatedRemainingSeconds}с`;
               }
             }
+          }
+        }
+      } else if (message.type === 'all-text-result') {
+        // Обработка результата получения текста со страницы
+        const textOutputContainer = document.getElementById('text-output-container');
+        const textTotalNodes = document.getElementById('text-total-nodes');
+        const textTotalChars = document.getElementById('text-total-chars');
+        const textStatsSection = document.getElementById('text-stats-section');
+        const textActionsSection = document.getElementById('text-actions-section');
+        const textLoadingIndicator = document.getElementById('text-loading-indicator');
+        
+        if (message.success && message.data) {
+          const data = message.data;
+          currentText = data.allText;
+          
+          // Скрываем индикатор загрузки
+          if (textLoadingIndicator) textLoadingIndicator.style.display = 'none';
+          
+          // Обновляем статистику
+          if (textTotalNodes) textTotalNodes.textContent = data.totalNodes || 0;
+          if (textTotalChars) textTotalChars.textContent = (data.statistics && data.statistics.totalCharacters) || 0;
+          
+          // Показываем статистику
+          if (textStatsSection) textStatsSection.style.display = 'block';
+          
+          // Выводим текст
+          if (textOutputContainer) {
+            textOutputContainer.textContent = currentText || 'Текст не найден на странице';
+            textOutputContainer.style.display = 'block';
+          }
+          
+          // Показываем кнопки действий
+          if (textActionsSection) textActionsSection.style.display = 'flex';
+        } else {
+          // Обработка ошибки
+          if (textLoadingIndicator) textLoadingIndicator.style.display = 'none';
+          
+          if (textOutputContainer) {
+            textOutputContainer.textContent = `Ошибка: ${message.error || 'Не удалось получить текст'}`;
+            textOutputContainer.style.display = 'block';
+          }
+        }
+      } else if (message.type === 'markdown-export-progress') {
+        // Обновление прогресса экспорта в Markdown
+        const markdownExportProgress = document.getElementById('markdown-export-progress');
+        const progressText = document.getElementById('markdown-progress-text');
+        const progressBar = document.getElementById('markdown-progress-bar');
+        
+        if (markdownExportProgress) markdownExportProgress.style.display = 'block';
+        if (progressText && message.message) {
+          progressText.textContent = message.message;
+        }
+        if (progressBar && message.percent !== undefined) {
+          progressBar.style.width = message.percent + '%';
+        }
+      } else if (message.type === 'markdown-export-result') {
+        // Результат экспорта в Markdown
+        console.log('Получен результат экспорта в Markdown:', message);
+        
+        const markdownExportProgress = document.getElementById('markdown-export-progress');
+        const progressText = document.getElementById('markdown-progress-text');
+        const progressBar = document.getElementById('markdown-progress-bar');
+        
+        // НЕ скрываем прогресс сразу - покажем статус результата
+        if (progressBar) progressBar.style.width = '100%';
+        
+        if (message.success && message.data) {
+          const { markdown, json, images, pageName } = message.data;
+          console.log('Данные экспорта:', { 
+            markdownLength: (markdown && markdown.length) || 0, 
+            jsonLength: (json && json.length) || 0,
+            imagesCount: (images && images.length) || 0, 
+            pageName 
+          });
+          
+          // Создаем ZIP архив с Markdown, JSON файлами и изображениями
+          if (typeof JSZip !== 'undefined') {
+            console.log('JSZip доступен, создаем архив');
+            try {
+              const zip = new JSZip();
+              
+              // Добавляем Markdown файл
+              if (markdown) {
+                zip.file(`${pageName || 'page'}.md`, markdown);
+              }
+              
+              // Добавляем JSON файл
+              if (json) {
+                zip.file(`${pageName || 'page'}.json`, json);
+              }
+              
+              // Создаем папку для изображений
+              const assetsFolder = zip.folder('figma-assets');
+              
+              // Добавляем изображения
+              for (const image of images) {
+                if (image.data && image.filename) {
+                  const imageData = new Uint8Array(image.data);
+                  const filename = image.filename.includes('/') 
+                    ? image.filename.split('/').pop() 
+                    : image.filename;
+                  assetsFolder.file(filename, imageData);
+                }
+              }
+              
+              // Генерируем и скачиваем ZIP
+              zip.generateAsync({ type: 'blob' }).then((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const safePageName = (pageName || 'figma-export').replace(/[^a-zA-Z0-9-_]/g, '-');
+                a.download = `${safePageName}-${new Date().toISOString().slice(0, 10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Уведомление об успехе
+                const progressText = document.getElementById('markdown-progress-text');
+                if (progressText) {
+                  progressText.textContent = '✓ Экспорт завершен!';
+                  progressText.style.color = '#4CAF50';
+                  setTimeout(() => {
+                    if (markdownExportProgress) markdownExportProgress.style.display = 'none';
+                  }, 2000);
+                }
+              }).catch(err => {
+                console.error('Ошибка при создании ZIP:', err);
+                alert('Ошибка при создании ZIP архива');
+              });
+            } catch (error) {
+              console.error('Ошибка при экспорте в Markdown:', error);
+              alert(`Ошибка: ${error.message || 'Не удалось создать архив'}`);
+            }
+          } else {
+            console.warn('JSZip недоступен, используем fallback');
+            // Fallback: просто скачиваем Markdown (если JSZip недоступен)
+            const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safePageName = (pageName || 'page').replace(/[^a-zA-Z0-9-_]/g, '-');
+            a.download = `${safePageName}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            if (progressText) {
+              progressText.textContent = '✓ Markdown скачан (без изображений)';
+              progressText.style.color = '#4CAF50';
+            }
+            setTimeout(() => {
+              if (markdownExportProgress) markdownExportProgress.style.display = 'none';
+            }, 2000);
+          }
+        } else {
+          // Обработка ошибки
+          console.error('Ошибка экспорта:', message.error);
+          const errorMessage = message.error || 'Неизвестная ошибка';
+          alert(`Ошибка экспорта: ${errorMessage}`);
+          
+          if (markdownExportProgress) markdownExportProgress.style.display = 'block';
+          const progressText = document.getElementById('markdown-progress-text');
+          if (progressText) {
+            progressText.textContent = '✗ Ошибка: ' + errorMessage;
+            progressText.style.color = '#F44336';
           }
         }
       } else if (message.type === 'error') {
