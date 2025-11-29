@@ -6,6 +6,7 @@ backups/
 *.tmp
 *.swp
 .DS_Store
+.env
 
 # Файлы редактора
 .vscode/
