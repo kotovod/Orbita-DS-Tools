@@ -1,10 +1,10 @@
-console.log('=== ORBITA ICON CHECKER v3.0.5 START ===');
+console.log('=== ORBITA DS ✦ TOOLS v3.0.5 START ===');
 console.log('Timestamp:', new Date().toISOString());
 
-// Основной код плагина Orbita Icon Checker
+// Основной код плагина Orbita DS ✦ Tools
 // VERSION: 3.0.5 (2025-10-17 00:50)
 
-console.log('🔧 Orbita Icon Checker v3.0.5 загружен');
+console.log('🔧 Orbita DS ✦ Tools v3.0.5 загружен');
 
 // Флаг отладочного режима (можно изменить на false для продакшена)
 const DEBUG_MODE = false;
@@ -5444,7 +5444,7 @@ async function exportTokensToJSON() {
         localTokens: localCount,
         remoteTokens: remoteCount,
         figmaFileName: figma.root.name,
-        exportedBy: 'Orbita Icon Checker - Design System Validator',
+        exportedBy: 'Orbita DS ✦ Tools - Design System Validator',
         version: '3.0.4'
       }
     };
