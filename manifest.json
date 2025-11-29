@@ -20,20 +20,20 @@
       "command": "check-icons"
     },
     {
-      "name": "AI Design Lint",
+      "name": "Экспорт иконок в SVG",
+      "command": "svg-export"
+    },
+    {
+      "name": "Design System Validator β",
+      "command": "design-system-validator"
+    },
+    {
+      "name": "AI Design Lint β",
       "command": "ai-design-lint"
     },
     {
       "name": "Node ID Inspector",
       "command": "node-id-inspector"
-    },
-    {
-      "name": "Экспорт в SVG",
-      "command": "svg-export"
-    },
-    {
-      "name": "Design System Validator",
-      "command": "design-system-validator"
     },
     {
       "name": "Экспорт свойств компонентов",
