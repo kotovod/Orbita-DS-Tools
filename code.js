@@ -145,6 +145,16 @@ figma.ui.onmessage = async function(msg) {
       // Устанавливаем флаг, что проверка запущена
       isCheckingInProgress = true;
       
+      // Сохраняем текущее выделение, если запрошено
+      if (msg.saveSelection) {
+        const selection = figma.currentPage.selection;
+        const nodeIds = selection.map(node => node.id);
+        figma.ui.postMessage({ 
+          type: 'saved-selection', 
+          nodeIds: nodeIds 
+        });
+      }
+      
       // Обновляем настройки проверок, если они переданы
       if (msg.settings) {
         checkSettings = msg.settings;
@@ -190,6 +200,23 @@ figma.ui.onmessage = async function(msg) {
           type: 'error',
           message: `Ошибка при фокусировке на компоненте: ${error.message}`
         });
+      }
+    } else if (msg.type === 'restore-selection') {
+      // Восстановление сохраненного выделения
+      try {
+        const nodes = [];
+        for (const nodeId of msg.nodeIds) {
+          const node = await figma.getNodeByIdAsync(nodeId);
+          if (node) {
+            nodes.push(node);
+          }
+        }
+        if (nodes.length > 0) {
+          figma.currentPage.selection = nodes;
+          console.log('Выделение восстановлено:', nodes.length, 'нод(ы)');
+        }
+      } catch (error) {
+        console.error('Ошибка при восстановлении выделения:', error);
       }
     } else if (msg.type === 'create-cell') {
       // Создание Cell с компонент-сетом и sourse-token-name

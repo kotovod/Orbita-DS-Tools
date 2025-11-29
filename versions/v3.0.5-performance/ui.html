@@ -2093,6 +2093,12 @@
       // Если проверка не запущена, запускаем ее
       isCheckingInProgress = true;
       
+      // Меняем заголовок на Icons Checker
+      const headerTitle = document.querySelector('h1');
+      if (headerTitle) {
+        headerTitle.innerHTML = 'Orbita DS&nbsp;&nbsp;✦&nbsp;&nbsp;Icons Checker';
+      }
+      
       // Меняем текст и цвет кнопки
       checkButton.textContent = 'Остановить проверку';
       checkButton.style.backgroundColor = '#E74C3C';
@@ -3766,8 +3772,9 @@ ${designSystemContext}
             message: message.result.message
           });
           
-          // Запускаем повторную проверку
-          checkButton.click();
+          // Не запускаем повторную проверку автоматически,
+          // чтобы не потерять список ошибок при фокусе на конкретном варианте
+          // Пользователь может запустить проверку вручную кнопкой "Проверить"
         } else {
           displayMessage({
             type: 'error',
@@ -4720,14 +4727,19 @@ ${designSystemContext}
         
         // Добавляем обработчик клика с защитой от двойного клика
         // Если nodeId отсутствует (общая ошибка) или тип ошибки general, делаем кнопку неактивной
-        if (!result.nodeId || errorObj.type === 'general') {
+        if (!result.nodeId || errorObj.type === 'general' || errorObj.type === 'empty-color-layer') {
           fixButton.style.opacity = '0.5';
           fixButton.style.cursor = 'not-allowed';
+          fixButton.disabled = true;
           
           // Меняем текст тултипа
           const tooltip = fixButton.querySelector('.tooltip');
           if (tooltip) {
-            tooltip.textContent = 'Требуется действие пользователя';
+            if (errorObj.type === 'empty-color-layer') {
+              tooltip.textContent = 'Временно не работает';
+            } else {
+              tooltip.textContent = 'Требуется действие пользователя';
+            }
           }
         } else {
           fixButton.addEventListener('click', debounce(() => {
@@ -5490,7 +5502,7 @@ ${designSystemContext}
       markdown += `- **Alt текст:** ${analysis.accessibility?.hasAltText ? '✅' : '❌'}\n`;
       markdown += `- **Контрастность:** ${analysis.accessibility?.colorContrast || 'неизвестно'}\n\n`;
       
-      markdown += `---\n*Сгенерировано плагином Orbita DS ✦ Tools*\n`;
+      markdown += `---\n*Сгенерировано плагином Orbita DS ✦ Icons Checker*\n`;
       
       downloadFile('component-analysis.md', markdown, 'text/markdown');
     }
