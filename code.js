@@ -44,7 +44,11 @@ if (figma.command === 'node-id-inspector') {
     figma.ui.postMessage({ type: 'set-mode', mode: 'svg-export' });
   }, 100);
 } else if (figma.command === 'ai-design-lint') {
-  // Для AI Design Lint используем средний UI
+  // ============================================
+  // AI Design Lint (доступен только в dev версии)
+  // Скрыт из production manifest.json, но код сохранён для разработки
+  // Доступен через manifest.dev.json
+  // ============================================
   figma.showUI(__html__, { width: 400, height: 550 });
   
   // Отправляем команду в UI для настройки интерфейса

@@ -671,6 +671,466 @@
       margin-bottom: 0;
     }
 
+    /* ============================================
+       УНИФИЦИРОВАННАЯ СИСТЕМА СТИЛЕЙ (v3.1)
+       Эталон: Check Icons UI
+       ============================================ */
+    
+    /* Унифицированный Header */
+    .unified-header {
+      position: sticky;
+      top: 0;
+      background-color: #34343C;
+      padding: 8px 16px 24px 16px;
+      z-index: 10;
+    }
+    
+    .unified-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .unified-badge {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background-color: #F02D2D;
+      color: white;
+      border-radius: 12px;
+      min-width: 16px;
+      height: 24px;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Унифицированные Кнопки */
+    .unified-button {
+      background-color: #F86025;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .unified-button:hover {
+      background-color: #E55520;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .unified-button:active {
+      background-color: #D24A1B;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .unified-button-primary {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    
+    .unified-button-secondary {
+      background-color: #44444C;
+      font-size: 12px;
+      padding: 12px 8px;
+      margin: 0 4px 16px 0;
+    }
+    
+    .unified-button-secondary:hover {
+      background-color: #55555C;
+    }
+    
+    .unified-button-tertiary {
+      background-color: #505059;
+      font-size: 12px;
+      padding: 8px 12px;
+    }
+    
+    .unified-button-tertiary:hover {
+      background-color: #E55520;
+    }
+    
+    /* Контейнер кнопок */
+    .unified-button-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    /* Унифицированный Progress Bar */
+    .unified-progress-container {
+      margin: 16px 0;
+    }
+    
+    .unified-progress-bar {
+      width: 100%;
+      height: 8px;
+      background-color: #44444C;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .unified-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #F86025, #FF8B4A);
+      width: 0%;
+      transition: width 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .unified-progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    .unified-progress-text {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #AAAAAA;
+      text-align: center;
+    }
+    
+    /* Унифицированные Карточки Результатов */
+    .unified-results-container {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+    
+    .unified-card {
+      background-color: #44444C;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      transition: background-color 0.2s ease;
+    }
+    
+    .unified-card:hover {
+      background-color: #4A4A54;
+    }
+    
+    .unified-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .unified-card-title {
+      font-weight: 600;
+      color: #F86025;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    
+    .unified-card-title:hover {
+      color: #E55520;
+    }
+    
+    .unified-card-subtitle {
+      font-size: 12px;
+      color: #AAAAAA;
+      margin-bottom: 8px;
+    }
+    
+    .unified-card-content {
+      font-size: 13px;
+      color: #FFFFFF;
+      line-height: 1.5;
+    }
+    
+    /* Унифицированные Списки */
+    .unified-list {
+      list-style-type: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    
+    .unified-list-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #505059;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    
+    .unified-list-item:last-child {
+      border-bottom: none;
+    }
+    
+    /* Унифицированные Сообщения */
+    .unified-message {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    
+    .unified-message-success {
+      background-color: #2D5F3D;
+      color: #FFFFFF;
+    }
+    
+    .unified-message-error {
+      background-color: #5C2D2D;
+      color: #FFFFFF;
+    }
+    
+    .unified-message-warning {
+      background-color: #5C4D2D;
+      color: #FFFFFF;
+    }
+    
+    .unified-message-info {
+      background-color: #2D3F5C;
+      color: #FFFFFF;
+    }
+    
+    /* Унифицированные Input'ы */
+    .unified-input {
+      width: 100%;
+      background-color: #44444C;
+      border: 1px solid #505059;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #FFFFFF;
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s ease;
+    }
+    
+    .unified-input:focus {
+      outline: none;
+      border-color: #F86025;
+    }
+    
+    .unified-input::placeholder {
+      color: #AAAAAA;
+    }
+    
+    .unified-textarea {
+      width: 100%;
+      background-color: #44444C;
+      border: 1px solid #505059;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #FFFFFF;
+      font-size: 14px;
+      margin-bottom: 12px;
+      resize: vertical;
+      min-height: 80px;
+      font-family: 'Inter', 'Roboto', sans-serif;
+    }
+    
+    .unified-textarea:focus {
+      outline: none;
+      border-color: #F86025;
+    }
+    
+    /* Унифицированные Label'ы */
+    .unified-label {
+      display: block;
+      font-size: 12px;
+      color: #AAAAAA;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    /* Унифицированные Select'ы */
+    .unified-select {
+      width: 100%;
+      background-color: #44444C;
+      border: 1px solid #505059;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #FFFFFF;
+      font-size: 14px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    
+    .unified-select:focus {
+      outline: none;
+      border-color: #F86025;
+    }
+    
+    /* Унифицированные Checkbox'ы и Radio */
+    .unified-checkbox-group,
+    .unified-radio-group {
+      margin-bottom: 16px;
+    }
+    
+    .unified-checkbox-item,
+    .unified-radio-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    
+    .unified-checkbox-item input[type="checkbox"],
+    .unified-radio-item input[type="radio"] {
+      margin-right: 8px;
+      cursor: pointer;
+    }
+    
+    .unified-checkbox-item label,
+    .unified-radio-item label {
+      font-size: 14px;
+      color: #FFFFFF;
+      cursor: pointer;
+    }
+    
+    /* Унифицированный Tooltip */
+    .unified-tooltip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: #55555C;
+      color: #A1A1A1;
+      font-size: 10px;
+      margin-left: 8px;
+      cursor: help;
+      position: relative;
+    }
+    
+    .unified-tooltip {
+      position: absolute;
+      visibility: hidden;
+      width: 250px;
+      background-color: #222228;
+      color: #FFFFFF;
+      text-align: left;
+      border-radius: 12px;
+      padding: 8px;
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 2000;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -125px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid #44444C;
+    }
+    
+    .unified-tooltip-icon:hover .unified-tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    /* Унифицированное состояние Loading */
+    .unified-loading {
+      text-align: center;
+      padding: 24px;
+      color: #AAAAAA;
+    }
+    
+    .unified-loading-spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #44444C;
+      border-top-color: #F86025;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Унифицированное состояние Empty */
+    .unified-empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: #AAAAAA;
+    }
+    
+    .unified-empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    .unified-empty-text {
+      font-size: 14px;
+    }
+    
+    /* Унифицированные Секции */
+    .unified-section {
+      margin-bottom: 24px;
+    }
+    
+    .unified-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+    }
+    
+    /* Разделитель */
+    .unified-divider {
+      height: 1px;
+      background-color: #505059;
+      margin: 16px 0;
+    }
+    
+    /* Вспомогательные классы */
+    .unified-text-small {
+      font-size: 12px;
+    }
+    
+    .unified-text-muted {
+      color: #AAAAAA;
+    }
+    
+    .unified-text-primary {
+      color: #F86025;
+    }
+    
+    .unified-text-center {
+      text-align: center;
+    }
+    
+    .unified-mt-8 { margin-top: 8px; }
+    .unified-mt-16 { margin-top: 16px; }
+    .unified-mb-8 { margin-bottom: 8px; }
+    .unified-mb-16 { margin-bottom: 16px; }
+    .unified-p-12 { padding: 12px; }
+    .unified-p-16 { padding: 16px; }
+    
+    /* ============================================
+       КОНЕЦ УНИФИЦИРОВАННОЙ СИСТЕМЫ
+       ============================================ */
+
     /* Стили для Design System Validator */
     .design-system-validator-section {
       display: none; /* Скрыт по умолчанию, показывается только в режиме design-system-validator */
@@ -1487,13 +1947,23 @@
 
     <!-- Node ID Inspector Section -->
     <div id="node-id-section" class="node-id-section">
-      <h3 style="font-size: 14px; font-weight: 600; margin: 16px 0 8px 0; color: #F86025;">Node ID Inspector</h3>
-      <div class="node-id-buttons">
-        <button id="get-node-id-button" class="secondary-button" style="width: 100%; margin-bottom: 8px;">Получить ID выделенного</button>
-        <button id="compare-ids-button" class="secondary-button" style="width: 100%; margin-bottom: 8px;">Сравнить ID</button>
+      <div class="unified-text-small unified-text-muted unified-mb-16" style="line-height: 1.5;">
+        Получение и сравнение Node ID выделенных элементов
       </div>
-      <div id="current-node-id" class="current-node-id" style="font-size: 12px; color: #AAAAAA; margin-bottom: 8px;">ID: не выбран</div>
-      <textarea id="node-ids-textarea" class="node-ids-textarea" placeholder="Здесь будут сохраняться ID выделенных объектов...&#10;Каждый ID на новой строке" rows="4"></textarea>
+
+      <div class="unified-button-group unified-mb-8">
+        <button id="get-node-id-button" class="unified-button unified-button-secondary" style="flex: 1;">
+          Получить ID выделенного
+        </button>
+        <button id="compare-ids-button" class="unified-button unified-button-secondary" style="flex: 1;">
+          Сравнить ID
+        </button>
+      </div>
+
+      <div id="current-node-id" class="unified-text-small unified-text-muted unified-mb-8">ID: не выбран</div>
+      
+      <textarea id="node-ids-textarea" class="unified-textarea" placeholder="Здесь будут сохраняться ID выделенных объектов...&#10;Каждый ID на новой строке" rows="4"></textarea>
+      
       <div id="comparison-result" class="comparison-result" style="display: none;"></div>
     </div>
 
@@ -1507,11 +1977,11 @@
         
         <!-- Заголовок с кнопкой настроек -->
 
-        <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 16px; line-height: 1.5;">
+        <div class="unified-text-small unified-text-muted unified-mb-16" style="line-height: 1.5;">
           Технический аудит компонентов с помощью AI: проверка токенов, доступности, готовности к коду
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <button id="ai-settings-button" class="settings-button" style="background: transparent; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">
+          <button id="ai-settings-button" class="unified-icon-button" style="padding: 4px;">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="#AAAAAA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M16.1667 12.5C16.0551 12.7513 16.0223 13.0301 16.0722 13.3006C16.122 13.5711 16.2521 13.8203 16.4458 14.0167L16.4917 14.0625C16.6466 14.2172 16.7694 14.4013 16.8533 14.6041C16.9372 14.8069 16.9806 15.0244 16.9806 15.2438C16.9806 15.4631 16.9372 15.6806 16.8533 15.8834C16.7694 16.0862 16.6466 16.2703 16.4917 16.425C16.337 16.5799 16.1528 16.7027 15.95 16.7866C15.7473 16.8705 15.5297 16.9139 15.3104 16.9139C15.0911 16.9139 14.8735 16.8705 14.6708 16.7866C14.468 16.7027 14.2838 16.5799 14.1292 16.425L14.0833 16.3792C13.887 16.1854 13.6378 16.0553 13.3673 16.0055C13.0968 15.9556 12.818 15.9884 12.5667 16.1C12.3203 16.2059 12.1103 16.3828 11.9631 16.6088C11.816 16.8348 11.738 17.0998 11.7375 17.3708V17.5C11.7375 17.942 11.5619 18.366 11.2494 18.6785C10.9368 18.9911 10.5128 19.1667 10.0708 19.1667C9.62886 19.1667 9.20484 18.9911 8.8923 18.6785C8.57976 18.366 8.40417 17.942 8.40417 17.5V17.4292C8.39771 17.1477 8.30996 16.8744 8.15178 16.6429C7.99359 16.4114 7.77203 16.2317 7.5125 16.125C7.26122 16.0134 6.98244 15.9806 6.71191 16.0305C6.44138 16.0803 6.19218 16.2104 5.99583 16.4042L5.95 16.45C5.79535 16.6049 5.61121 16.7277 5.40844 16.8116C5.20567 16.8955 4.98813 16.9389 4.76875 16.9389C4.54937 16.9389 4.33183 16.8955 4.12906 16.8116C3.92629 16.7277 3.74215 16.6049 3.5875 16.45C3.43261 16.2953 3.30983 16.1112 3.22593 15.9084C3.14203 15.7056 3.09861 15.4881 3.09861 15.2688C3.09861 15.0494 3.14203 14.8319 3.22593 14.6291C3.30983 14.4263 3.43261 14.2422 3.5875 14.0875L3.63333 14.0417C3.82713 13.8453 3.95723 13.5961 4.00707 13.3256C4.0569 13.0551 4.02413 12.7763 3.91833 12.525C3.81245 12.2786 3.63552 12.0686 3.40953 11.9215C3.18354 11.7743 2.91856 11.6963 2.6475 11.6958H2.5C2.05797 11.6958 1.63405 11.5202 1.32149 11.2077C1.00893 10.8951 0.833332 10.4711 0.833332 10.0292C0.833332 9.58721 1.00893 9.16319 1.32149 8.85065C1.63405 8.53811 2.05797 8.36252 2.5 8.36252H2.57083C2.85235 8.35606 3.12563 8.26831 3.35713 8.11012C3.58863 7.95194 3.76831 7.73038 3.875 7.47085C3.98663 7.21957 4.0194 6.94079 3.96957 6.67026C3.91974 6.39973 3.78964 6.15053 3.59583 5.95418L3.55 5.90835C3.39511 5.7537 3.27233 5.56956 3.18843 5.36679C3.10453 5.16402 3.06111 4.94648 3.06111 4.7271C3.06111 4.50772 3.10453 4.29018 3.18843 4.08741C3.27233 3.88464 3.39511 3.7005 3.55 3.54585C3.70465 3.39096 3.88879 3.26818 4.09156 3.18428C4.29433 3.10038 4.51187 3.05696 4.73125 3.05696C4.95063 3.05696 5.16817 3.10038 5.37094 3.18428C5.57371 3.26818 5.75785 3.39096 5.9125 3.54585L5.95833 3.59168C6.15468 3.78548 6.40388 3.91558 6.67441 3.96542C6.94494 4.01525 7.22372 3.98248 7.475 3.87668H7.5C7.74638 3.7708 7.95641 3.59387 8.10356 3.36788C8.25071 3.14189 8.32871 2.87691 8.32917 2.60585V2.50002C8.32917 2.05799 8.50476 1.63407 8.8173 1.32151C9.12984 1.00895 9.55377 0.833353 9.99583 0.833353C10.4379 0.833353 10.8618 1.00895 11.1744 1.32151C11.4869 1.63407 11.6625 2.05799 11.6625 2.50002V2.57085C11.663 2.84191 11.741 3.10689 11.8881 3.33288C12.0353 3.55887 12.2453 3.7358 12.4917 3.84168C12.7429 3.95331 13.0217 3.98608 13.2923 3.93625C13.5628 3.88642 13.812 3.75632 14.0083 3.56252L14.0542 3.51668C14.2088 3.3618 14.393 3.23902 14.5958 3.15512C14.7985 3.07121 15.0161 3.02779 15.2354 3.02779C15.4548 3.02779 15.6724 3.07121 15.8751 3.15512C16.0779 3.23902 16.262 3.3618 16.4167 3.51668C16.5716 3.67133 16.6943 3.85547 16.7782 4.05824C16.8621 4.26101 16.9056 4.47855 16.9056 4.69793C16.9056 4.91731 16.8621 5.13485 16.7782 5.33762C16.6943 5.54039 16.5716 5.72453 16.4167 5.87918L16.3708 5.92502C16.177 6.12137 16.0469 6.37057 15.9971 6.6411C15.9473 6.91163 15.98 7.19041 16.0858 7.44168V7.50002C16.1917 7.7464 16.3686 7.95643 16.5946 8.10358C16.8206 8.25073 17.0856 8.32873 17.3567 8.32918H17.5C17.942 8.32918 18.366 8.50478 18.6786 8.81732C18.9911 9.12986 19.1667 9.55378 19.1667 9.99585C19.1667 10.4379 18.9911 10.8618 18.6786 11.1744C18.366 11.4869 17.942 11.6625 17.5 11.6625H17.4292C17.1581 11.663 16.8931 11.741 16.6671 11.8881C16.4411 12.0353 16.2642 12.2453 16.1583 12.4917V12.5Z" stroke="#AAAAAA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1523,7 +1993,7 @@
 
 
         <!-- Кнопка анализа -->
-        <button id="analyze-design-button" class="primary-button" style="width: 100%; margin-bottom: 16px;">Анализировать дизайн</button>
+        <button id="analyze-design-button" class="unified-button unified-button-primary">Анализировать дизайн</button>
 
         <!-- Результаты анализа -->
         <div id="ai-analysis-result" class="ai-analysis-result" style="display: none;"></div>
@@ -1594,7 +2064,7 @@
           <!-- Секция предложений токенов -->
           <div id="token-suggestions-section" class="analysis-section">
             <div class="analysis-section-header">
-              <div class="analysis-section-title">💡 Token Suggestions</div>
+              <div class="analysis-section-title">Token Suggestions</div>
               <button class="analysis-section-toggle" onclick="toggleSection('token-suggestions-content')">▼</button>
             </div>
             <div id="token-suggestions-content" class="analysis-section-content" style="display: block;">
@@ -1603,19 +2073,19 @@
           </div>
 
           <!-- Кнопки экспорта -->
-          <div style="display: flex; gap: 8px; margin-top: 16px;">
-            <button id="export-json-button" class="secondary-button" style="flex: 1;">
-              📄 Export JSON
+          <div class="unified-button-group unified-mt-16">
+            <button id="export-json-button" class="unified-button unified-button-secondary" style="flex: 1;">
+              Export JSON
             </button>
-            <button id="export-markdown-button" class="secondary-button" style="flex: 1;">
-              📝 Export Markdown
+            <button id="export-markdown-button" class="unified-button unified-button-secondary" style="flex: 1;">
+              Export Markdown
             </button>
           </div>
 
           <!-- AI Chat Panel -->
           <div id="ai-chat-panel" class="analysis-section" style="margin-top: 16px;">
             <div class="analysis-section-header">
-              <div class="analysis-section-title">💬 AI Assistant</div>
+              <div class="analysis-section-title">AI Assistant</div>
               <button class="analysis-section-toggle" onclick="toggleSection('ai-chat-content')">▼</button>
             </div>
             <div id="ai-chat-content" class="analysis-section-content" style="display: block;">
@@ -1628,9 +2098,9 @@
               
               <!-- Поле ввода -->
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <textarea id="ai-chat-input" placeholder="Как исправить проблему с отступами?" style="width: 100%; min-height: 60px; max-height: 120px; background: #2A2A32; border: 1px solid #505059; border-radius: 6px; padding: 8px; color: white; font-size: 12px; resize: vertical; font-family: inherit; line-height: 1.4;"></textarea>
-                <button id="ai-chat-send-button" class="primary-button" style="width: 100%; padding: 10px; font-size: 12px;">
-                  💬 Задать вопрос AI
+                <textarea id="ai-chat-input" class="unified-textarea" placeholder="Как исправить проблему с отступами?" style="min-height: 60px; max-height: 120px;"></textarea>
+                <button id="ai-chat-send-button" class="unified-button unified-button-primary">
+                  Задать вопрос AI
                 </button>
               </div>
               
@@ -1645,18 +2115,18 @@
         <!-- Диалоговый режим -->
         <div id="ai-chat-section" style="display: none; margin-top: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="font-size: 12px; color: #FFFFFF; font-weight: 600;">Задать уточняющий вопрос:</label>
-            <button id="ai-clear-history-button" class="secondary-button" style="padding: 4px 8px; font-size: 11px;">
-              🗑️ Очистить историю
+            <label class="unified-label" style="margin-bottom: 0;">Задать уточняющий вопрос:</label>
+            <button id="ai-clear-history-button" class="unified-button unified-button-tertiary" style="padding: 4px 8px; font-size: 11px;">
+              Очистить историю
             </button>
           </div>
           
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <textarea id="ai-follow-up-input" placeholder="Например: Как исправить проблему с отступами? Какой токен использовать для цвета?" style="flex: 1; min-height: 44px; background: #2A2A32; border: 1px solid #505059; border-radius: 8px; padding: 8px; color: white; font-size: 12px; resize: vertical;"></textarea>
+            <textarea id="ai-follow-up-input" class="unified-textarea" placeholder="Например: Как исправить проблему с отступами? Какой токен использовать для цвета?" style="min-height: 44px;"></textarea>
           </div>
           
-          <button id="ai-ask-question-button" class="secondary-button" style="width: 100%; margin-bottom: 8px;">
-            💬 Задать вопрос
+          <button id="ai-ask-question-button" class="unified-button unified-button-secondary" style="width: 100%; margin-bottom: 8px;">
+            Задать вопрос
           </button>
           
           <div id="ai-chat-tokens-info" style="font-size: 10px; color: #AAAAAA; text-align: center; display: none;">
@@ -1679,7 +2149,7 @@
 
         <!-- Блок информации -->
         <div style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 11px; line-height: 1.5; color: #AAAAAA;">
-          <div style="font-weight: 600; color: #FFFFFF; margin-bottom: 8px;">🔍 Что проверяется:</div>
+          <div style="font-weight: 600; color: #FFFFFF; margin-bottom: 8px;">Что проверяется:</div>
         • Hard-coded значения vs токены<br>
         • Несоответствия отступов (7px вместо 8px)<br>
         • Контраст цветов (WCAG)<br>
@@ -1690,24 +2160,24 @@
       
         <!-- Токен -->
       <div class="ai-token-input" style="margin-bottom: 16px;">
-        <label for="yandex-token" style="font-size: 12px; color: #FFFFFF; display: block; margin-bottom: 8px;">Yandex OAuth Token:</label>
-        <input type="password" id="yandex-token" placeholder="Введите ваш OAuth токен" style="width: 100%; background: #2A2A32; border: 1px solid #505059; border-radius: 8px; padding: 8px; color: white; font-size: 12px; font-family: 'SF Mono', 'Monaco', monospace;">
-          <div style="font-size: 11px; color: #AAAAAA; margin-top: 4px;">
-            Токен будет сохранен локально. <a href="https://oauth.yandex.ru/authorize?response_type=token&client_id=YOUR_CLIENT_ID" target="_blank" style="color: #F86025; text-decoration: none;">Получить токен</a>
+        <label for="yandex-token" class="unified-label">Yandex OAuth Token:</label>
+        <input type="password" id="yandex-token" class="unified-input" placeholder="Введите ваш OAuth токен" style="font-family: 'SF Mono', 'Monaco', monospace;">
+          <div class="unified-text-small unified-text-muted" style="margin-top: 4px;">
+            Токен будет сохранен локально. <a href="https://oauth.yandex.ru/authorize?response_type=token&client_id=YOUR_CLIENT_ID" target="_blank" class="unified-link">Получить токен</a>
           </div>
       </div>
 
         <!-- JSON дизайн-системы -->
         <div style="margin-bottom: 16px;">
-          <label style="font-size: 12px; color: #FFFFFF; display: block; margin-bottom: 8px;">JSON дизайн-системы (опционально):</label>
+          <label class="unified-label">JSON дизайн-системы (опционально):</label>
           
           <!-- Кнопка загрузки файла -->
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <button id="ai-load-json-button" class="secondary-button" style="flex: 1;">
-              📁 Загрузить JSON
+          <div class="unified-button-group" style="margin-bottom: 8px;">
+            <button id="ai-load-json-button" class="unified-button unified-button-secondary" style="flex: 1;">
+              Загрузить JSON
             </button>
-            <button id="ai-clear-json-button" class="secondary-button" style="flex: 1;" disabled>
-              🗑️ Очистить
+            <button id="ai-clear-json-button" class="unified-button unified-button-secondary" style="flex: 1;" disabled>
+              Очистить
             </button>
       </div>
           <input type="file" id="ai-json-file-input" accept=".json" style="display: none;">
@@ -1739,7 +2209,7 @@
         </div>
 
         <!-- Кнопка сохранения -->
-        <button id="ai-save-settings-button" class="secondary-button" style="width: 100%;">Сохранить настройки</button>
+        <button id="ai-save-settings-button" class="unified-button unified-button-secondary" style="width: 100%;">Сохранить настройки</button>
       </div>
 
     </div>
@@ -1748,17 +2218,19 @@
     <div id="design-system-validator-section" class="design-system-validator-section">
       
       <!-- Главные кнопки -->
-      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-        <button id="dsv-settings-button" class="secondary-button" style="flex: 1; padding: 10px 16px; font-size: 13px;">
-          ⚙️ Настройки
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">
+        <button id="dsv-validate-button-main" class="unified-button unified-button-primary" style="flex-grow: 1;">
+          Проверить
         </button>
-        <button id="dsv-validate-button-main" class="primary-button" style="flex: 2; padding: 10px 16px; font-size: 13px;">
-          🔍 Проверить
+        <button id="dsv-settings-button" class="settings-button" title="Настройки валидатора">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5.75195 8.00196C5.90055 8.00417 6.04242 8.00868 6.17285 8.01758C6.45841 8.03707 6.79738 8.0831 7.14844 8.22852C7.88321 8.53299 8.46701 9.11679 8.77148 9.85157C8.9169 10.2026 8.96294 10.5416 8.98242 10.8272C8.99136 10.9582 8.99584 11.1007 8.99805 11.25H16V12.75H8.99805C8.99584 12.8993 8.99136 13.0419 8.98242 13.1729C8.96294 13.4584 8.9169 13.7974 8.77148 14.1484C8.46701 14.8832 7.88321 15.467 7.14844 15.7715C6.79738 15.9169 6.45841 15.9629 6.17285 15.9824C5.91182 16.0002 5.60499 16 5.29004 16H4.70996C4.39501 16 4.08818 16.0002 3.82715 15.9824C3.54159 15.9629 3.20263 15.9169 2.85156 15.7715C2.11679 15.467 1.53299 14.8832 1.22852 14.1484C1.0831 13.7974 1.03706 13.4584 1.01758 13.1729L1.00195 12.75H0V11.25H1.00195C1.00416 11.1007 1.00864 10.9582 1.01758 10.8272C1.03706 10.5416 1.0831 10.2026 1.22852 9.85157C1.53299 9.11679 2.11679 8.53299 2.85156 8.22852C3.20263 8.0831 3.54159 8.03707 3.82715 8.01758C4.08818 7.99977 4.39501 7.99997 4.70996 8H5.29004L5.75195 8.00196ZM4.75 9.5C4.13845 9.5 3.79431 9.49968 3.5332 9.57618C3.49591 9.5871 3.46023 9.59999 3.42578 9.61426C3.10427 9.74749 2.84061 9.98786 2.67773 10.292C2.65452 10.3354 2.63325 10.38 2.61426 10.4258C2.53126 10.6262 2.50814 10.8657 2.50195 11.25C2.49963 11.394 2.5 11.5588 2.5 11.749V12.251C2.5 12.4412 2.49963 12.606 2.50195 12.75C2.50814 13.1343 2.53126 13.3738 2.61426 13.5742C2.76649 13.9416 3.05839 14.2335 3.42578 14.3857C3.46023 14.4 3.49592 14.4129 3.5332 14.4238C3.79431 14.5003 4.13845 14.5 4.75 14.5H5.25C5.94891 14.5 6.29856 14.4999 6.57422 14.3857C6.9416 14.2335 7.23351 13.9416 7.38574 13.5742C7.46874 13.3738 7.49186 13.1343 7.49805 12.75C7.50037 12.6057 7.5 12.4409 7.5 12.25V11.75C7.5 11.5592 7.50037 11.3943 7.49805 11.25C7.49263 10.9138 7.47409 10.6882 7.41406 10.5029C7.40551 10.4765 7.39608 10.4508 7.38574 10.4258C7.25252 10.1043 7.01214 9.84061 6.70801 9.67774C6.66465 9.65452 6.62005 9.63325 6.57422 9.61426C6.38037 9.53397 6.14982 9.51001 5.78711 9.50293L5.37695 9.5H4.75ZM11.752 0.00195683C11.9005 0.00417449 12.0424 0.00868269 12.1729 0.0175818C12.4584 0.0370653 12.7974 0.0831038 13.1484 0.228519C13.8832 0.532991 14.467 1.11679 14.7715 1.85157C14.9169 2.20263 14.9629 2.5416 14.9824 2.82715C14.9914 2.95815 14.9958 3.1007 14.998 3.25H16V4.75H14.998C14.9958 4.89931 14.9914 5.04185 14.9824 5.17286C14.9629 5.45841 14.9169 5.79738 14.7715 6.14844C14.467 6.88322 13.8832 7.46702 13.1484 7.77149C12.7974 7.9169 12.4584 7.96294 12.1729 7.98243C11.9118 8.00024 11.605 8.00004 11.29 8H10.71C10.395 8.00004 10.0882 8.00024 9.82715 7.98243C9.54159 7.96294 9.20262 7.9169 8.85156 7.77149C8.11679 7.46701 7.53299 6.88322 7.22852 6.14844C7.0831 5.79738 7.03706 5.45841 7.01758 5.17286L7.00195 4.75H0V3.25H7.00195C7.00416 3.1007 7.00864 2.95815 7.01758 2.82715C7.03706 2.54159 7.0831 2.20263 7.22852 1.85157C7.53299 1.11679 8.11679 0.532993 8.85156 0.228519C9.20262 0.0831048 9.54159 0.0370655 9.82715 0.0175818C10.0882 -0.000228366 10.395 -2.76315e-05 10.71 3.70663e-06H11.29L11.752 0.00195683ZM10.75 1.5C10.0511 1.5 9.70144 1.50008 9.42578 1.61426C9.0584 1.7665 8.76649 2.0584 8.61426 2.42578C8.53126 2.62617 8.50814 2.86574 8.50195 3.25C8.49963 3.39435 8.5 3.55915 8.5 3.75V4.25C8.5 4.44085 8.49963 4.60566 8.50195 4.75C8.50737 5.08624 8.52591 5.31176 8.58594 5.49707C8.59449 5.52346 8.60391 5.54925 8.61426 5.57422C8.74748 5.89574 8.98785 6.15939 9.29199 6.32227C9.33535 6.34548 9.37995 6.36675 9.42578 6.38575C9.68421 6.49279 10.0078 6.49959 10.623 6.5H11.25C11.8615 6.5 12.2057 6.50032 12.4668 6.42383C12.5041 6.41291 12.5398 6.40001 12.5742 6.38575C12.8957 6.25252 13.1594 6.01215 13.3223 5.70801C13.3455 5.66465 13.3668 5.62005 13.3857 5.57422C13.4687 5.37384 13.4919 5.13427 13.498 4.75C13.5004 4.60601 13.5 4.44123 13.5 4.25098V3.74903C13.5 3.55877 13.5004 3.394 13.498 3.25C13.4919 2.86574 13.4687 2.62617 13.3857 2.42578C13.2335 2.0584 12.9416 1.7665 12.5742 1.61426C12.5398 1.59999 12.5041 1.5871 12.4668 1.57618C12.2709 1.51879 12.0283 1.50456 11.6611 1.50098L11.25 1.5H10.75Z" fill="white"/>
+          </svg>
         </button>
       </div>
 
       <!-- Статус токенов (всегда виден) -->
-      <div id="dsv-tokens-status-main" style="font-size: 10px; color: #AAAAAA; margin-bottom: 16px; display: none; background: #2A2A32; padding: 8px 12px; border-radius: 6px;">
+      <div id="dsv-tokens-status-main" class="unified-message unified-message-info unified-text-small" style="display: none;">
         <span id="dsv-tokens-status-main-text">Токены не загружены</span>
       </div>
 
@@ -1766,17 +2238,17 @@
       <div id="dsv-settings-panel" style="display: none; margin-bottom: 16px;">
       
       <!-- Заголовок с описанием -->
-      <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 16px; line-height: 1.5;">
+      <div class="unified-text-small unified-text-muted unified-mb-16" style="line-height: 1.5;">
         Проверка использования Figma Variables (дизайн-токенов) в компонентах
       </div>
 
       <!-- Выбор режима проверки -->
-      <div style="margin-bottom: 16px;">
-        <label style="font-size: 12px; color: #FFFFFF; display: block; margin-bottom: 8px; font-weight: 600;">Режим проверки:</label>
-        <div style="display: flex; gap: 8px;">
-          <button id="dsv-mode-local" class="dsv-mode-button" data-mode="local" style="flex: 1; padding: 8px 12px; background: #2A2A32; border: 1px solid #505059; border-radius: 8px; color: white; cursor: pointer; font-size: 12px; transition: all 0.2s;">Local</button>
-          <button id="dsv-mode-remote" class="dsv-mode-button" data-mode="remote" style="flex: 1; padding: 8px 12px; background: #2A2A32; border: 1px solid #505059; border-radius: 8px; color: white; cursor: pointer; font-size: 12px; transition: all 0.2s;">Remote</button>
-          <button id="dsv-mode-all" class="dsv-mode-button" data-mode="all" style="flex: 1; padding: 8px 12px; background: #F86025; border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 12px; transition: all 0.2s;">All</button>
+      <div class="unified-mb-16">
+        <label class="unified-label">Режим проверки:</label>
+        <div class="unified-button-group">
+          <button id="dsv-mode-local" class="dsv-mode-button unified-button unified-button-secondary" data-mode="local" style="flex: 1;">Local</button>
+          <button id="dsv-mode-remote" class="dsv-mode-button unified-button unified-button-secondary" data-mode="remote" style="flex: 1;">Remote</button>
+          <button id="dsv-mode-all" class="dsv-mode-button unified-button unified-button-primary" data-mode="all" style="flex: 1;">All</button>
         </div>
       </div>
 
@@ -1793,7 +2265,7 @@
               <div style="font-size: 11px; color: #AAAAAA; margin-bottom: 8px; line-height: 1.4;">
                 <strong style="color: #FFFFFF;">Шаг 1:</strong> Экспортируйте токены из текущего Figma файла
               </div>
-              <button id="dsv-export-tokens-button" class="secondary-button" style="width: 100%; font-size: 11px; padding: 8px 12px; background: #3A3A42; border: 1px solid #F86025;">
+              <button id="dsv-export-tokens-button" class="unified-button unified-button-secondary" style="width: 100%;">
                 📤 Экспортировать токены в JSON
               </button>
               <div id="dsv-export-status" style="font-size: 10px; color: #AAAAAA; margin-top: 6px; display: none;">
@@ -1809,18 +2281,18 @@
               </div>
               <input type="file" id="dsv-tokens-json-file" accept=".json" style="display: none;">
               <div style="display: flex; gap: 8px;">
-                <button id="dsv-load-tokens-json-button" class="secondary-button" style="flex: 1; font-size: 11px; padding: 6px 12px;">
-                  📁 Загрузить JSON
+                <button id="dsv-load-tokens-json-button" class="unified-button unified-button-secondary" style="flex: 1;">
+                  Загрузить JSON
                 </button>
-                <button id="dsv-clear-tokens-json-button" class="secondary-button" style="flex: 1; font-size: 11px; padding: 6px 12px;" disabled>
+                <button id="dsv-clear-tokens-json-button" class="unified-button unified-button-secondary" style="flex: 1;" disabled>
                   🔄 Заменить
                 </button>
               </div>
               <div id="dsv-tokens-json-status" style="font-size: 10px; color: #AAAAAA; margin-top: 6px; display: none;">
                 <span id="dsv-tokens-json-status-text">Файл не загружен</span>
               </div>
-              <div style="font-size: 10px; color: #888; margin-top: 4px; line-height: 1.3;">
-                💡 Токены сохраняются автоматически и загружаются при следующем запуске
+                <div style="font-size: 10px; color: #888; margin-top: 4px; line-height: 1.3;">
+                  Токены сохраняются автоматически и загружаются при следующем запуске
               </div>
             </div>
 
@@ -1828,9 +2300,9 @@
         </details>
       </div>
 
-      <!-- Подсказка для пользователя -->
-      <div style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 11px; line-height: 1.5; color: #AAAAAA; border-left: 3px solid #F86025;">
-        💡 <strong style="color: #FFFFFF;">Совет:</strong> Если ничего не выделено — будет проверена вся текущая страница. Выделите объекты для проверки конкретных элементов.
+        <!-- Подсказка для пользователя -->
+        <div style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 11px; line-height: 1.5; color: #AAAAAA; border-left: 3px solid #F86025;">
+          <strong style="color: #FFFFFF;">Совет:</strong> Если ничего не выделено — будет проверена вся текущая страница. Выделите объекты для проверки конкретных элементов.
       </div>
 
       <!-- Настройки проверки -->
@@ -1914,15 +2386,16 @@
             </div>
 
             <!-- Кнопки быстрых действий -->
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #505059; display: flex; gap: 8px;">
-              <button id="dsv-select-all-props" class="secondary-button" style="flex: 1; font-size: 10px; padding: 4px 8px;">
-                ✓ Все
-              </button>
-              <button id="dsv-select-none-props" class="secondary-button" style="flex: 1; font-size: 10px; padding: 4px 8px;">
-                ✗ Нет
-              </button>
-              <button id="dsv-select-default-props" class="secondary-button" style="flex: 1; font-size: 10px; padding: 4px 8px;">
-                ↺ По умолчанию
+            <div class="unified-divider"></div>
+              <div class="unified-button-group unified-text-small">
+                <button id="dsv-select-all-props" class="unified-button unified-button-tertiary" style="flex: 1;">
+                  Все
+                </button>
+                <button id="dsv-select-none-props" class="unified-button unified-button-tertiary" style="flex: 1;">
+                  Нет
+                </button>
+                <button id="dsv-select-default-props" class="unified-button unified-button-tertiary" style="flex: 1;">
+                  По умолчанию
               </button>
             </div>
           </div>
@@ -1935,34 +2408,34 @@
       <div id="dsv-results-panel" style="display: none;">
         
         <!-- Сводка результатов -->
-        <div id="dsv-summary" style="background: #2A2A32; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-          <div style="font-size: 14px; font-weight: 600; color: #FFFFFF; margin-bottom: 12px;">📊 Сводка</div>
+        <div id="dsv-summary" class="unified-card unified-mb-16">
+          <div class="unified-section-title">Сводка</div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
             <div style="display: flex; justify-content: space-between;">
-              <span style="color: #AAAAAA;">Проверено элементов:</span>
+              <span class="unified-text-muted">Проверено элементов:</span>
               <span id="dsv-total-nodes" style="color: #FFFFFF; font-weight: 600;">0</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
-              <span style="color: #AAAAAA;">Найдено проблем:</span>
+              <span class="unified-text-muted">Найдено проблем:</span>
               <span id="dsv-total-issues" style="color: #F44336; font-weight: 600;">0</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
-              <span style="color: #AAAAAA;">С токенами:</span>
+              <span class="unified-text-muted">С токенами:</span>
               <span id="dsv-with-variables" style="color: #4CAF50; font-weight: 600;">0</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
-              <span style="color: #AAAAAA;">Без токенов:</span>
-              <span id="dsv-without-variables" style="color: #F86025; font-weight: 600;">0</span>
+              <span class="unified-text-muted">Без токенов:</span>
+              <span id="dsv-without-variables" class="unified-text-primary" style="font-weight: 600;">0</span>
             </div>
           </div>
         </div>
 
         <!-- Список проблем -->
         <div id="dsv-issues-section" style="display: none;">
-          <div style="font-size: 14px; font-weight: 600; color: #FFFFFF; margin-bottom: 12px;">
+          <div class="unified-section-title">
             ⚠️ Найденные проблемы
           </div>
-          <div id="dsv-issues-list" style="max-height: 300px; overflow-y: auto;">
+          <div id="dsv-issues-list" class="unified-results-container" style="max-height: 300px; overflow-y: auto;">
             <!-- Issues will be inserted here -->
           </div>
         </div>
@@ -1971,8 +2444,8 @@
       </div>
 
       <!-- Индикатор загрузки -->
-      <div id="dsv-loading-indicator" style="display: none; text-align: center; padding: 20px; color: #AAAAAA;">
-        <div style="margin-bottom: 8px;">⏳ Проверка...</div>
+        <div id="dsv-loading-indicator" class="unified-loading" style="display: none;">
+          <div style="margin-bottom: 8px;">Проверка...</div>
         <div id="dsv-progress-text" style="font-size: 11px;">Обработано: <span id="dsv-progress-count">0</span> элементов</div>
       </div>
 
@@ -1981,11 +2454,17 @@
     <!-- Component Properties Export Section -->
     <div id="component-properties-export-section" class="component-properties-export-section">
     
-      <p>Соберет все свойства компонентов, их определения и фактическое использование в файле.</p>
+      <p class="unified-text-small unified-text-muted unified-mb-16" style="line-height: 1.5;">
+        Соберет все свойства компонентов, их определения и фактическое использование в файле.
+      </p>
       
-      <div class="export-buttons">
-        <button id="analyze-component-properties-button" class="secondary-button" style="width: 100%; margin-bottom: 8px;">Анализировать компоненты</button>
-        <button id="export-component-properties-button" class="primary-button" style="width: 100%; margin-bottom: 16px;">Экспортировать свойства</button>
+      <div class="unified-button-group unified-mb-16">
+        <button id="analyze-component-properties-button" class="unified-button unified-button-secondary" style="flex: 1;">
+          Анализировать компоненты
+        </button>
+        <button id="export-component-properties-button" class="unified-button unified-button-primary" style="flex: 1;">
+          Экспортировать свойства
+        </button>
       </div>
       
       <div id="component-properties-analysis" class="export-analysis" style="display: none;">
@@ -2032,31 +2511,31 @@
 
     <!-- Get Page Text Section -->
     <div id="get-page-text-section" class="get-page-text-section">
-      <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 16px; line-height: 1.5;">
+      <div class="unified-text-small unified-text-muted unified-mb-16" style="line-height: 1.5;">
         Получить весь текст с текущей страницы Figma. Функция автоматически обходит все видимые элементы и извлекает текстовое содержимое с сохранением структуры слоев.
       </div>
       
       <!-- Настройки экспорта -->
-      <details style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-        <summary style="font-size: 12px; font-weight: 600; color: #FFFFFF; cursor: pointer; user-select: none;">
-          ⚙️ Настройки экспорта
+        <details style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+          <summary style="font-size: 12px; font-weight: 600; color: #FFFFFF; cursor: pointer; user-select: none;">
+            Настройки экспорта
         </summary>
         <div style="margin-top: 12px; font-size: 11px;">
           <div style="margin-bottom: 12px;">
-            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Блоки документации (через запятую):</label>
-            <input type="text" id="md-doc-blocks" value="Overview, A11Y" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+            <label class="unified-label" style="font-size: 11px;">Блоки документации (через запятую):</label>
+            <input type="text" id="md-doc-blocks" class="unified-input" value="Overview, A11Y" style="font-size: 11px;">
           </div>
           <div style="margin-bottom: 12px;">
-            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Компонент заголовка:</label>
-            <input type="text" id="md-heading-component" value="sourse-heading" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+            <label class="unified-label" style="font-size: 11px;">Компонент заголовка:</label>
+            <input type="text" id="md-heading-component" class="unified-input" value="sourse-heading" style="font-size: 11px;">
           </div>
           <div style="margin-bottom: 12px;">
-            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Компонент текста:</label>
-            <input type="text" id="md-text-component" value="sourse-base" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+            <label class="unified-label" style="font-size: 11px;">Компонент текста:</label>
+            <input type="text" id="md-text-component" class="unified-input" value="sourse-base" style="font-size: 11px;">
           </div>
           <div style="margin-bottom: 12px;">
-            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Фрейм с изображениями:</label>
-            <input type="text" id="md-preview-frame" value="Preview" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;">
+            <label class="unified-label" style="font-size: 11px;">Фрейм с изображениями:</label>
+            <input type="text" id="md-preview-frame" class="unified-input" value="Preview" style="font-size: 11px;">
           </div>
           
           <div style="margin-bottom: 12px;">
@@ -2086,33 +2565,41 @@
           </div>
           
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <label style="display: flex; align-items: center; color: #AAAAAA; font-size: 11px;">
-              <input type="checkbox" id="md-use-indentation" checked style="margin-right: 6px;">
+            <label class="unified-checkbox-container" style="font-size: 11px;">
+              <input type="checkbox" id="md-use-indentation" checked>
               Использовать отступы для вложенности
             </label>
           </div>
           <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <label style="display: flex; align-items: center; color: #AAAAAA; font-size: 11px;">
-              <input type="checkbox" id="md-only-doc-blocks" checked style="margin-right: 6px;">
+            <label class="unified-checkbox-container" style="font-size: 11px;">
+              <input type="checkbox" id="md-only-doc-blocks" checked>
               Только блоки документации
             </label>
           </div>
           
           <div style="margin-bottom: 12px; padding-top: 12px; border-top: 1px solid #505059;">
-            <label style="display: block; color: #AAAAAA; margin-bottom: 4px;">Исключить компоненты (через запятую):</label>
-            <input type="text" id="md-excluded-components" value="sourse-Info" style="width: 100%; background: #34343C; border: 1px solid #505059; border-radius: 6px; padding: 6px; color: white; font-size: 11px;" placeholder="sourse-Info, другой-компонент">
+            <label class="unified-label" style="font-size: 11px;">Исключить компоненты (через запятую):</label>
+            <input type="text" id="md-excluded-components" class="unified-input" value="sourse-Info" style="font-size: 11px;" placeholder="sourse-Info, другой-компонент">
             <div style="font-size: 10px; color: #888888; margin-top: 4px;">Компоненты и узлы с этими именами будут пропущены при экспорте</div>
           </div>
         </div>
       </details>
       
-      <button id="get-text-button" class="primary-button" style="width: 100%; margin-bottom: 8px;">📄 Получить текст со страницы</button>
-      <button id="get-page-export-markdown-button" class="primary-button" style="width: 100%; margin-bottom: 16px; background: #4CAF50;">📝 Экспорт в Markdown + JSON</button>
+        <div class="unified-button-group unified-mb-8">
+          <button id="get-text-button" class="unified-button unified-button-primary" style="flex: 1;">
+            Получить текст со страницы
+          </button>
+        </div>
+        <div class="unified-button-group unified-mb-16">
+          <button id="get-page-export-markdown-button" class="unified-button unified-button-primary" style="flex: 1; background: #4CAF50;">
+            Экспорт в Markdown + JSON
+        </button>
+      </div>
       
       <!-- Статистика -->
-      <div id="text-stats-section" style="background: #2A2A32; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: none;">
-        <div style="font-size: 12px; font-weight: 600; color: #FFFFFF; margin-bottom: 12px;">
-          📊 Статистика
+        <div id="text-stats-section" style="background: #2A2A32; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: none;">
+          <div style="font-size: 12px; font-weight: 600; color: #FFFFFF; margin-bottom: 12px;">
+            Статистика
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
           <div style="display: flex; justify-content: space-between;">
@@ -2131,20 +2618,20 @@
         <!-- Текст будет выведен здесь -->
       </div>
       
-      <!-- Кнопки действий -->
-      <div id="text-actions-section" style="display: none; margin-top: 12px; display: flex; gap: 8px;">
-        <button id="copy-text-button" class="secondary-button" style="flex: 1;">📋 Копировать</button>
-        <button id="download-text-button" class="secondary-button" style="flex: 1;">💾 Скачать</button>
-      </div>
-      
-      <!-- Индикатор загрузки -->
-      <div id="text-loading-indicator" style="display: none; text-align: center; padding: 20px; color: #AAAAAA; font-size: 12px;">
-        ⏳ Загрузка текста со страницы...
-      </div>
-      
-      <!-- Индикатор экспорта Markdown -->
-      <div id="markdown-export-progress" style="display: none; background: #2A2A32; border-radius: 8px; padding: 16px; margin-top: 16px;">
-        <div style="text-align: center; color: #AAAAAA; font-size: 12px; margin-bottom: 8px;" id="markdown-progress-text">⏳ Экспорт в Markdown...</div>
+        <!-- Кнопки действий -->
+        <div id="text-actions-section" class="unified-button-group unified-mt-12" style="display: none;">
+          <button id="copy-text-button" class="unified-button unified-button-secondary" style="flex: 1;">Копировать</button>
+          <button id="download-text-button" class="unified-button unified-button-secondary" style="flex: 1;">Скачать</button>
+        </div>
+        
+        <!-- Индикатор загрузки -->
+        <div id="text-loading-indicator" style="display: none; text-align: center; padding: 20px; color: #AAAAAA; font-size: 12px;">
+          Загрузка текста со страницы...
+        </div>
+        
+        <!-- Индикатор экспорта Markdown -->
+        <div id="markdown-export-progress" style="display: none; background: #2A2A32; border-radius: 8px; padding: 16px; margin-top: 16px;">
+          <div style="text-align: center; color: #AAAAAA; font-size: 12px; margin-bottom: 8px;" id="markdown-progress-text">Экспорт в Markdown...</div>
         <div style="background: #1A1A1A; border-radius: 4px; height: 4px; overflow: hidden;">
           <div id="markdown-progress-bar" style="background: #4CAF50; height: 100%; width: 0%; transition: width 0.3s;"></div>
         </div>
@@ -2154,8 +2641,10 @@
     <!-- SVG Export Section -->
     <div id="svg-export-section" class="svg-export-section">
 
-      <div class="export-buttons">
-        <button id="scan-icons-button" class="primary-button" style="width: 100%; margin-bottom: 16px;">Посчитать иконки</button>
+      <div class="unified-button-group">
+        <button id="scan-icons-button" class="unified-button unified-button-primary">
+          Посчитать иконки
+        </button>
       </div>
       
       <div id="export-stats" class="export-stats" style="display: none;">
@@ -2180,7 +2669,7 @@
 
     <div id="svg-export-section" class="svg-export-section">
       <div id="color-options" class="color-options" style="display: none; margin-bottom: 16px;">
-        <div class="settings-item">
+        <div class="unified-checkbox-container">
           <input type="checkbox" id="apply-fill-color" />
           <label for="apply-fill-color">Задать цвет иконкам [fill]</label>
         </div>
@@ -2195,14 +2684,16 @@
           <div class="custom-color-input" style="margin-top: 0px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
               <input type="color" id="custom-fill-color" value="#000000" style="width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer;">
-              <input type="text" id="custom-fill-hex" value="#000000" placeholder="#000000" style="background: #b5b7c026; border-radius: 8px; padding: 8px 16px; color: white; font-size: 14px; width: 120px;">
+              <input type="text" id="custom-fill-hex" class="unified-input" value="#000000" placeholder="#000000" style="width: 120px;">
             </div>
           </div>
         </div>
       </div>
 
-      <div class="export-buttons">
-        <button id="export-icons-button" class="primary-button" style="width: 100%; display: none;">Экспортировать в SVG (zip)</button>
+      <div class="unified-button-group">
+        <button id="export-icons-button" class="unified-button unified-button-primary" style="display: none;">
+          Экспортировать в SVG (zip)
+        </button>
       </div>
 
       <!-- Детальный прогрессбар для SVG экспорта -->
@@ -2626,7 +3117,7 @@
             const progressText = document.getElementById('markdown-progress-text');
             const progressBar = document.getElementById('markdown-progress-bar');
             if (progressText) {
-              progressText.textContent = '⏳ Экспорт в Markdown...';
+              progressText.textContent = 'Экспорт в Markdown...';
               progressText.style.color = '#AAAAAA';
             }
             if (progressBar) progressBar.style.width = '0%';
@@ -2709,15 +3200,15 @@
           
           // Копируем текст в буфер обмена
           navigator.clipboard.writeText(currentText).then(() => {
-            copyTextButton.textContent = '✓ Скопировано!';
+            copyTextButton.textContent = 'Скопировано!';
             setTimeout(() => {
-              copyTextButton.textContent = '📋 Копировать';
+              copyTextButton.textContent = 'Копировать';
             }, 2000);
           }).catch(err => {
             console.error('Ошибка при копировании:', err);
-            copyTextButton.textContent = '✗ Ошибка';
+            copyTextButton.textContent = 'Ошибка';
             setTimeout(() => {
-              copyTextButton.textContent = '📋 Копировать';
+              copyTextButton.textContent = 'Копировать';
             }, 2000);
           });
         });
@@ -2738,9 +3229,9 @@
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
           
-          downloadTextButton.textContent = '✓ Скачано!';
+          downloadTextButton.textContent = 'Скачано!';
           setTimeout(() => {
-            downloadTextButton.textContent = '💾 Скачать';
+            downloadTextButton.textContent = 'Скачать';
           }, 2000);
         });
       }
@@ -3048,11 +3539,11 @@
       const allSame = ids.every(id => id === firstId);
 
       if (allSame) {
-        showComparisonResult(`✅ Все ${ids.length} ID одинаковые: ${firstId}`, 'match');
+        showComparisonResult(`Все ${ids.length} ID одинаковые: ${firstId}`, 'match');
       } else {
         // Находим уникальные ID
         const uniqueIds = [...new Set(ids)];
-        showComparisonResult(`❌ Найдено ${uniqueIds.length} разных ID из ${ids.length} всего:
+        showComparisonResult(`Найдено ${uniqueIds.length} разных ID из ${ids.length} всего:
 ${uniqueIds.map((id, index) => `${index + 1}. ${id}`).join('\n')}`, 'no-match');
       }
     }
@@ -3273,10 +3764,10 @@ ${designSystemContext}
 Где element_id - это значение поля "id" проблемного элемента
 
 Примеры:
-- ❌ НЕ: "Проверьте размеры шрифта"
-- ✅ ДА: "[ID:123:456] Текст использует fontSize: 13px (hard-coded), рекомендуется заменить на токен text-sm (14px)"
-- ✅ ДА: "[ID:789:012] Отступ paddingLeft: 7px не соответствует стандартным значениям, используй 8px (spacing-2)"
-- ✅ ДА: "[ID:345:678] Цвет fill: rgb(0.2, 0.3, 0.4) hard-coded, используй токен color-primary-500"
+- НЕ: "Проверьте размеры шрифта"
+- ДА: "[ID:123:456] Текст использует fontSize: 13px (hard-coded), рекомендуется заменить на токен text-sm (14px)"
+- ДА: "[ID:789:012] Отступ paddingLeft: 7px не соответствует стандартным значениям, используй 8px (spacing-2)"
+- ДА: "[ID:345:678] Цвет fill: rgb(0.2, 0.3, 0.4) hard-coded, используй токен color-primary-500"
 
 В конце дай CODE-READINESS SCORE в формате: "Score: XX%" где XX - число от 0 до 100.
 
@@ -3432,7 +3923,7 @@ ${designSystemContext}
       copyButton.addEventListener('click', () => {
         navigator.clipboard.writeText(analysis)
           .then(() => {
-            copyButton.textContent = '✓ Скопировано!';
+            copyButton.textContent = 'Скопировано!';
             setTimeout(() => {
               copyButton.textContent = 'Скопировать результаты';
             }, 2000);
@@ -3941,7 +4432,7 @@ ${designSystemContext}
         settingsButton.addEventListener('click', () => {
           const isHidden = settingsPanel.style.display === 'none';
           settingsPanel.style.display = isHidden ? 'block' : 'none';
-          settingsButton.textContent = isHidden ? '❌ Закрыть настройки' : '⚙️ Настройки';
+          settingsButton.textContent = isHidden ? 'Закрыть настройки' : 'Настройки';
         });
       }
       
@@ -4049,7 +4540,7 @@ ${designSystemContext}
           // Показываем статус загрузки
           if (exportStatus) {
             exportStatus.style.display = 'block';
-            exportStatusText.textContent = '⏳ Экспортирую токены...';
+            exportStatusText.textContent = 'Экспортирую токены...';
             exportStatusText.style.color = '#AAAAAA';
           }
           
@@ -4093,7 +4584,7 @@ ${designSystemContext}
               // Показываем статус загрузки
               if (tokensJsonStatus) {
                 tokensJsonStatus.style.display = 'block';
-                tokensJsonStatusText.textContent = '⏳ Загружаю токены...';
+                tokensJsonStatusText.textContent = 'Загружаю токены...';
                 tokensJsonStatusText.style.color = '#AAAAAA';
               }
               
@@ -4102,7 +4593,7 @@ ${designSystemContext}
               debugError('Design System Validator: Ошибка парсинга JSON', error);
               if (tokensJsonStatus) {
                 tokensJsonStatus.style.display = 'block';
-                tokensJsonStatusText.textContent = `❌ Ошибка: ${error.message}`;
+                tokensJsonStatusText.textContent = `Ошибка: ${error.message}`;
                 tokensJsonStatusText.style.color = '#F44336';
               }
             }
@@ -4345,7 +4836,7 @@ ${designSystemContext}
         
         const suggestionLabel = document.createElement('div');
         suggestionLabel.style.cssText = 'font-size: 10px; color: #4CAF50; font-weight: 600; margin-bottom: 4px; text-transform: uppercase;';
-        suggestionLabel.textContent = '💡 Найден подходящий токен';
+        suggestionLabel.textContent = 'Найден подходящий токен';
         
         const tokenInfo = document.createElement('div');
         tokenInfo.style.cssText = 'font-size: 11px; color: #FFFFFF; margin-bottom: 6px;';
@@ -4401,7 +4892,7 @@ ${designSystemContext}
       
       // Отключаем кнопку и меняем текст
       button.disabled = true;
-      button.textContent = '⏳ Привязка...';
+      button.textContent = 'Привязка...';
       button.style.background = '#999';
       
       // Отправляем запрос на привязку токена
@@ -4680,7 +5171,7 @@ ${designSystemContext}
                 // Уведомление об успехе
                 const progressText = document.getElementById('markdown-progress-text');
                 if (progressText) {
-                  progressText.textContent = '✓ Экспорт завершен!';
+                  progressText.textContent = 'Экспорт завершен!';
                   progressText.style.color = '#4CAF50';
                   setTimeout(() => {
                     if (markdownExportProgress) markdownExportProgress.style.display = 'none';
@@ -4709,7 +5200,7 @@ ${designSystemContext}
             URL.revokeObjectURL(url);
             
             if (progressText) {
-              progressText.textContent = '✓ Markdown скачан (без изображений)';
+              progressText.textContent = 'Markdown скачан (без изображений)';
               progressText.style.color = '#4CAF50';
             }
             setTimeout(() => {
@@ -4725,7 +5216,7 @@ ${designSystemContext}
           if (markdownExportProgress) markdownExportProgress.style.display = 'block';
           const progressText = document.getElementById('markdown-progress-text');
           if (progressText) {
-            progressText.textContent = '✗ Ошибка: ' + errorMessage;
+            progressText.textContent = 'Ошибка: ' + errorMessage;
             progressText.style.color = '#F44336';
           }
         }
@@ -5075,7 +5566,6 @@ ${designSystemContext}
         const resultsPanel = document.getElementById('dsv-results-panel');
         if (resultsPanel) {
           resultsPanel.innerHTML = `<div style="background: #44444C; border-radius: 8px; padding: 16px; color: #F44336; text-align: center;">
-            <div style="font-size: 18px; margin-bottom: 8px;">❌</div>
             <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Ошибка при проверке</div>
             <div style="font-size: 12px; color: #AAAAAA;">${message.error || 'Неизвестная ошибка'}</div>
           </div>`;
@@ -5121,7 +5611,7 @@ ${designSystemContext}
           // Показываем успех
           if (exportStatus) {
             exportStatus.style.display = 'block';
-            exportStatusText.textContent = `✅ Экспортировано токенов: ${message.data.tokens.length} (файл скачан)`;
+            exportStatusText.textContent = `Экспортировано токенов: ${message.data.tokens.length} (файл скачан)`;
             exportStatusText.style.color = '#4CAF50';
           }
           
@@ -5135,7 +5625,7 @@ ${designSystemContext}
           // Показываем ошибку
           if (exportStatus) {
             exportStatus.style.display = 'block';
-            exportStatusText.textContent = `❌ Ошибка: ${message.error || 'Не удалось экспортировать токены'}`;
+            exportStatusText.textContent = `Ошибка: ${message.error || 'Не удалось экспортировать токены'}`;
             exportStatusText.style.color = '#F44336';
           }
           
@@ -5152,7 +5642,7 @@ ${designSystemContext}
         if (tokensJsonStatus && tokensJsonStatusText) {
           tokensJsonStatus.style.display = 'block';
           
-          let statusText = `✅ Загружено токенов: ${message.count}`;
+          let statusText = `Загружено токенов: ${message.count}`;
           if (message.savedAt) {
             const date = new Date(message.savedAt);
             const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -5182,7 +5672,7 @@ ${designSystemContext}
         
         if (tokensJsonStatus && tokensJsonStatusText) {
           tokensJsonStatus.style.display = 'block';
-          tokensJsonStatusText.textContent = `❌ Ошибка: ${message.error}`;
+          tokensJsonStatusText.textContent = `Ошибка: ${message.error}`;
           tokensJsonStatusText.style.color = '#F44336';
         }
       } else if (message.type === 'dsv-tokens-loaded-from-storage') {
@@ -5196,7 +5686,7 @@ ${designSystemContext}
         if (tokensJsonStatus && tokensJsonStatusText) {
           tokensJsonStatus.style.display = 'block';
           
-          let statusText = `✅ Загружено токенов: ${message.count}`;
+          let statusText = `Загружено токенов: ${message.count}`;
           if (message.savedAt) {
             const savedDate = new Date(message.savedAt);
             const now = new Date();
@@ -5239,7 +5729,7 @@ ${designSystemContext}
         if (message.hasTokens && message.count > 0) {
           if (tokensJsonStatus && tokensJsonStatusText) {
             tokensJsonStatus.style.display = 'block';
-            tokensJsonStatusText.textContent = `✅ Загружено токенов: ${message.count}`;
+            tokensJsonStatusText.textContent = `Загружено токенов: ${message.count}`;
             tokensJsonStatusText.style.color = '#4CAF50';
           }
           
@@ -6077,7 +6567,7 @@ ${designSystemContext}
       if (aiJsonStatus && aiJsonStatusText && aiClearJsonButton) {
         if (hasJson) {
           aiJsonStatus.style.display = 'block';
-          aiJsonStatusText.textContent = `✓ Загружен: ${fileName}`;
+          aiJsonStatusText.textContent = `Загружен: ${fileName}`;
           aiJsonStatusText.style.color = '#4CAF50';
           aiClearJsonButton.disabled = false;
         } else {
@@ -6127,7 +6617,7 @@ ${designSystemContext}
         }
         
         // Показываем уведомление
-        aiSaveSettingsButton.textContent = '✓ Сохранено!';
+        aiSaveSettingsButton.textContent = 'Сохранено!';
         setTimeout(() => {
           aiSaveSettingsButton.textContent = 'Сохранить настройки';
           // Возвращаемся на основной экран
@@ -6181,7 +6671,7 @@ ${designSystemContext}
           const loadingIndicator = document.createElement('div');
           loadingIndicator.id = 'analysis-loading-indicator';
           loadingIndicator.style.cssText = 'color: #AAAAAA; text-align: center; padding: 32px; background: #2A2A32; border-radius: 8px; margin-bottom: 16px;';
-          loadingIndicator.textContent = '⏳ Анализируем компонент...';
+          loadingIndicator.textContent = 'Анализируем компонент...';
           componentAnalysisPanel.insertBefore(loadingIndicator, componentAnalysisPanel.firstChild);
           console.log('AI Design Lint: Панель анализа показана');
         } else {
@@ -6311,7 +6801,7 @@ ${designSystemContext}
       if (!hardcodedList) return;
       
       if (hardcodedValues.length === 0) {
-        hardcodedList.innerHTML = '<div style="color: #4CAF50; font-size: 12px; text-align: center; padding: 16px;">✅ Все значения используют токены</div>';
+        hardcodedList.innerHTML = '<div style="color: #4CAF50; font-size: 12px; text-align: center; padding: 16px;">Все значения используют токены</div>';
         return;
       }
       
@@ -6332,7 +6822,7 @@ ${designSystemContext}
       if (!recommendationsList) return;
       
       if (recommendations.length === 0) {
-        recommendationsList.innerHTML = '<div style="color: #4CAF50; font-size: 12px; text-align: center; padding: 16px;">✅ Компонент соответствует стандартам</div>';
+        recommendationsList.innerHTML = '<div style="color: #4CAF50; font-size: 12px; text-align: center; padding: 16px;">Компонент соответствует стандартам</div>';
         return;
       }
       
@@ -6350,7 +6840,7 @@ ${designSystemContext}
       if (!suggestionsList) return;
       
       if (suggestions.length === 0) {
-        suggestionsList.innerHTML = '<div style="color: #4CAF50; font-size: 12px; text-align: center; padding: 16px;">✅ Все значения уже используют токены</div>';
+        suggestionsList.innerHTML = '<div style="color: #4CAF50; font-size: 12px; text-align: center; padding: 16px;">Все значения уже используют токены</div>';
         return;
       }
       
@@ -6420,9 +6910,9 @@ ${designSystemContext}
           // Показываем ошибку
           const componentAnalysisPanel = document.getElementById('component-analysis-panel');
           if (componentAnalysisPanel) {
-            componentAnalysisPanel.innerHTML = `
-              <div style="color: #F44336; text-align: center; padding: 16px; background: #2A2A32; border-radius: 8px;">
-                ❌ ${message.message}
+              componentAnalysisPanel.innerHTML = `
+                <div style="color: #F44336; text-align: center; padding: 16px; background: #2A2A32; border-radius: 8px;">
+                  ${message.message}
               </div>
             `;
             componentAnalysisPanel.style.display = 'block';
@@ -6573,12 +7063,12 @@ ${designSystemContext}
       // Токены
       markdown += `## Использование токенов\n\n`;
       if (analysis.tokensUsed && analysis.tokensUsed.length > 0) {
-        markdown += `✅ **Найдено токенов:** ${analysis.tokensUsed.length}\n\n`;
+        markdown += `**Найдено токенов:** ${analysis.tokensUsed.length}\n\n`;
         analysis.tokensUsed.forEach(token => {
           markdown += `- **${token.name}** (${token.type}) - ${token.path}\n`;
         });
       } else {
-        markdown += `❌ Токены не найдены\n`;
+        markdown += `Токены не найдены\n`;
       }
       markdown += `\n`;
       
@@ -6590,7 +7080,7 @@ ${designSystemContext}
           markdown += `- **${item.type}:** ${item.description} (${JSON.stringify(item.value)})\n`;
         });
       } else {
-        markdown += `✅ Hardcoded значения не найдены\n`;
+        markdown += `Hardcoded значения не найдены\n`;
       }
       markdown += `\n`;
       
@@ -6602,13 +7092,13 @@ ${designSystemContext}
           markdown += `${priority} **${rec.priority.toUpperCase()}:** ${rec.message}\n\n`;
         });
       } else {
-        markdown += `✅ Компонент соответствует стандартам\n\n`;
+        markdown += `Компонент соответствует стандартам\n\n`;
       }
       
       // Доступность
       markdown += `## Доступность\n\n`;
-      markdown += `- **Текстовые метки:** ${analysis.accessibility?.hasLabels ? '✅' : '❌'}\n`;
-      markdown += `- **Alt текст:** ${analysis.accessibility?.hasAltText ? '✅' : '❌'}\n`;
+      markdown += `- **Текстовые метки:** ${analysis.accessibility?.hasLabels ? 'Да' : 'Нет'}\n`;
+      markdown += `- **Alt текст:** ${analysis.accessibility?.hasAltText ? 'Да' : 'Нет'}\n`;
       markdown += `- **Контрастность:** ${analysis.accessibility?.colorContrast || 'неизвестно'}\n\n`;
       
       markdown += `---\n*Сгенерировано плагином Orbita DS ✦ Icons Checker*\n`;

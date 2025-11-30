@@ -1,5 +1,5 @@
 {
-  "Orbita DS ✦ Tools (Dev)",
+  "name": "Orbita DS ✦ Tools (Dev)",
   "id": "1537434937937210613",
   "api": "1.0.0",
   "main": "code.js",
@@ -16,7 +16,7 @@
   "documentAccess": "dynamic-page",
   "menu": [
     {
-      "name": "Проверить иконки",
+      "name": "Icons Checker",
       "command": "check-icons"
     },
     {
@@ -24,11 +24,11 @@
       "command": "ai-design-lint"
     },
     {
-      "name": "Node ID Inspector",
+      "name": "Node Inspector",
       "command": "node-id-inspector"
     },
     {
-      "name": "Экспорт в SVG",
+      "name": "SVG Export icons",
       "command": "svg-export"
     },
     {
@@ -36,8 +36,12 @@
       "command": "design-system-validator"
     },
     {
-      "name": "Экспорт свойств компонентов",
+      "name": "Component Props Export",
       "command": "export-component-properties"
+    },
+    {
+      "name": "Page Text Export",
+      "command": "get-page-text"
     }
   ]
 }

@@ -8,19 +8,17 @@
   "networkAccess": {
     "allowedDomains": [
       "https://yandex-team.ru",
-      "https://cdn.jsdelivr.net",
-      "https://api.eliza.yandex.net",
-      "https://events.statsigapi.net"
+      "https://cdn.jsdelivr.net"
     ]
   },
   "documentAccess": "dynamic-page",
   "menu": [
     {
-      "name": "Проверить иконки",
+      "name": "Icons Checker",
       "command": "check-icons"
     },
     {
-      "name": "Экспорт иконок в SVG",
+      "name": "SVG Export icons",
       "command": "svg-export"
     },
     {
@@ -28,19 +26,15 @@
       "command": "design-system-validator"
     },
     {
-      "name": "AI Design Lint β",
-      "command": "ai-design-lint"
-    },
-    {
-      "name": "Node ID Inspector",
+      "name": "Node Inspector",
       "command": "node-id-inspector"
     },
     {
-      "name": "Экспорт свойств компонентов",
+      "name": "Component Props Export",
       "command": "export-component-properties"
     },
     {
-      "name": "Получить текст со страницы",
+      "name": "Page Text Export",
       "command": "get-page-text"
     }
   ]
