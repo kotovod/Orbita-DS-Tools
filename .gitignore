@@ -1,31 +1,16 @@
-# Бэкапы
-backups/
+# Игнорируем node_modules и собранные файлы
+node_modules/
+package-lock.json
 
-# Временные файлы
+# Игнорируем временные файлы
 *.log
 *.tmp
-*.swp
 .DS_Store
-.env
 
-# Файлы редактора
-.vscode/
-.idea/
-*.code-workspace
-
-# Backup files
+# Игнорируем бэкапы
 *.backup
-ui.html.backup
+*.bak
 
-# ZIP архивы (кроме releases)
-*.zip
-!releases/*.zip
-
-# Node modules (если будете использовать)
-node_modules/
-
-# Временные файлы системы
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
+# Но НЕ игнорируем code.js и ui.html (они нужны Figma)
+!code.js
+!ui.html
