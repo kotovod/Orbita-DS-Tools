@@ -768,112 +768,76 @@ async function checkNumericVariables() {
     let nodesChecked = 0;
     const errors = [];
     
+    // Собираем все ноды для проверки
+    const nodesToCheck = [];
+    
     // Обходим каждый выбранный узел
     for (const selectedNode of selection) {
       // Для COMPONENT_SET пропускаем сам узел, но проверяем детей
       if (selectedNode.type === 'COMPONENT_SET') {
         console.log(`⏭️ DSV: Пропускаем сам COMPONENT_SET "${selectedNode.name}", но проверяем содержимое`);
         traverseNode(selectedNode, (node) => {
-          nodesChecked++;
-          
-          try {
-            const values = extractNumericValues(node);
-            
-            // Проверяем каждое значение
-            for (const item of values) {
-              if (!item.hasVariable) {
-                // Нет привязки к переменной - ищем подходящий токен
-                let suggestedToken = null;
-                
-                if (savedTokens && savedTokens.variables) {
-                  if (item.valueType === 'numeric') {
-                    // Для числовых значений
-                    suggestedToken = findClosestVariable(item.value, item.type, savedTokens.variables);
-                  } else if (item.valueType === 'color') {
-                    // Для цветов - используем findColorVariable с opacity и node
-                    suggestedToken = findColorVariable(item.value, item.opacity || 1, item.type, savedTokens.variables, item.node);
-                  }
-                }
-                
-                // Создаём ошибку в новом формате
-                errors.push({
-                  nodeId: item.nodeId,
-                  nodeName: item.nodeName,
-                  property: PROPERTY_LABELS[item.type] || item.type,
-                  propertyType: item.type, // Для исправления!
-                  valueType: item.valueType,
-                  value: item.value,
-                  fillIndex: item.fillIndex,
-                  strokeIndex: item.strokeIndex,
-                  suggestedToken: suggestedToken ? {
-                    id: suggestedToken.id,
-                    key: suggestedToken.key,
-                    name: suggestedToken.name,
-                    value: suggestedToken.value || suggestedToken.Light // Для цветов берём значение из режима
-                  } : null
-                });
-                
-                console.log(`❌ ${item.nodeName}: ${item.type} = ${item.value} (без переменной)`);
-              } else {
-                console.log(`✅ ${item.nodeName}: ${item.type} = ${item.value} (с переменной)`);
-              }
-            }
-          } catch (error) {
-            console.error(`❌ DSV: Ошибка при проверке ноды:`, error);
-          }
+          nodesToCheck.push(node);
         }, true); // skipSelf = true для COMPONENT_SET
         continue;
       }
       
       traverseNode(selectedNode, (node) => {
-        nodesChecked++;
-        
-        try {
-          const values = extractNumericValues(node);
-          
-          // Проверяем каждое значение
-          for (const item of values) {
-            if (!item.hasVariable) {
-              // Нет привязки к переменной - ищем подходящий токен
-              let suggestedToken = null;
-              
-              if (savedTokens && savedTokens.variables) {
-                if (item.valueType === 'numeric') {
-                  // Для числовых значений
-                  suggestedToken = findClosestVariable(item.value, item.type, savedTokens.variables);
-                } else if (item.valueType === 'color') {
-                  // Для цветов - используем findColorVariable с opacity и node
-                  suggestedToken = findColorVariable(item.value, item.opacity || 1, item.type, savedTokens.variables, item.node);
-                }
-              }
-              
-              // Создаём ошибку в новом формате
-              errors.push({
-                nodeId: item.nodeId,
-                nodeName: item.nodeName,
-                property: PROPERTY_LABELS[item.type] || item.type,
-                propertyType: item.type, // Для исправления!
-                valueType: item.valueType,
-                value: item.value,
-                fillIndex: item.fillIndex,
-                strokeIndex: item.strokeIndex,
-                suggestedToken: suggestedToken ? {
-                  id: suggestedToken.id,
-                  key: suggestedToken.key,
-                  name: suggestedToken.name,
-                  value: suggestedToken.value || suggestedToken.Light // Для цветов берём значение из режима
-                } : null
-              });
-              
-              console.log(`❌ ${item.nodeName}: ${item.type} = ${item.value} (без переменной)`);
-            } else {
-              console.log(`✅ ${item.nodeName}: ${item.type} = ${item.value} (с переменной)`);
-            }
-          }
-        } catch (error) {
-          console.error(`⚠️ Ошибка при проверке узла ${node.name}:`, error.message);
-        }
+        nodesToCheck.push(node);
       });
+    }
+    
+    console.log(`✓ Собрано ${nodesToCheck.length} нод для проверки`);
+    
+    // Теперь обрабатываем все ноды асинхронно
+    for (const node of nodesToCheck) {
+      nodesChecked++;
+      
+      try {
+        const values = extractNumericValues(node);
+        
+        // Проверяем каждое значение
+        for (const item of values) {
+          if (!item.hasVariable) {
+            // Нет привязки к переменной - ищем подходящий токен
+            let suggestedToken = null;
+            
+            if (savedTokens && savedTokens.variables) {
+              if (item.valueType === 'numeric') {
+                // Для числовых значений
+                suggestedToken = findClosestVariable(item.value, item.type, savedTokens.variables);
+              } else if (item.valueType === 'color') {
+                // Для цветов - используем findColorVariable с opacity и node
+                suggestedToken = await findColorVariable(item.value, item.opacity || 1, item.type, savedTokens.variables, item.node);
+              }
+            }
+            
+            // Создаём ошибку в новом формате
+            errors.push({
+              nodeId: item.nodeId,
+              nodeName: item.nodeName,
+              property: PROPERTY_LABELS[item.type] || item.type,
+              propertyType: item.type, // Для исправления!
+              valueType: item.valueType,
+              value: item.value,
+              fillIndex: item.fillIndex,
+              strokeIndex: item.strokeIndex,
+              suggestedToken: suggestedToken ? {
+                id: suggestedToken.id,
+                key: suggestedToken.key,
+                name: suggestedToken.name,
+                value: suggestedToken.value || suggestedToken.Light // Для цветов берём значение из режима
+              } : null
+            });
+            
+            console.log(`❌ ${item.nodeName}: ${item.type} = ${item.value} (без переменной)`);
+          } else {
+            console.log(`✅ ${item.nodeName}: ${item.type} = ${item.value} (с переменной)`);
+          }
+        }
+      } catch (error) {
+        console.error(`❌ DSV: Ошибка при проверке ноды:`, error);
+      }
     }
     
     console.log(`✓ Проверка завершена: ${nodesChecked} элементов, ${errors.length} ошибок`);
@@ -927,7 +891,7 @@ async function fixDSVError(error) {
     } else if (error.valueType === 'color') {
       // Для цветов
       console.log(`🔍 DSV: Ищем цветовой токен через findColorVariable`);
-      variableData = findColorVariable(error.value, error.opacity || 1, propertyType, savedTokens.variables, node);
+      variableData = await findColorVariable(error.value, error.opacity || 1, propertyType, savedTokens.variables, node);
     }
     
     if (!variableData) {
@@ -1562,21 +1526,35 @@ function findFirstModeInGroup(group) {
 }
 
 // Функция для получения режима конкретной коллекции для узла
-function getModeForCollection(node, collectionName, savedVariables) {
+async function getModeForCollection(node, collectionName, savedVariables) {
   let currentNode = node;
+
+  console.log(`🔍 getModeForCollection: Ищем режим для коллекции "${collectionName}"`);
+  console.log(`   Начальный узел: ${node.name} (${node.type})`);
+
+  // Получаем все локальные коллекции (АСИНХРОННО!)
+  const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
   
-  // Получаем все локальные коллекции
-  const localCollections = figma.variables.getLocalVariableCollections();
+  console.log(`   📚 Всего локальных коллекций: ${localCollections.length}`);
+  if (localCollections.length > 0) {
+    console.log(`   Локальные коллекции: ${localCollections.map(c => `"${c.name}"`).join(', ')}`);
+  }
   
   // Сначала пытаемся найти коллекцию по имени в localCollections
   const targetCollection = localCollections.find(c => c.name === collectionName);
   
   // Если нашли локальную коллекцию
   if (targetCollection) {
+    console.log(`   ✓ Коллекция найдена локально, ID: ${targetCollection.id}`);
+    console.log(`   Доступные режимы: ${targetCollection.modes.map(m => m.name).join(', ')}`);
+    
     // Идём вверх по иерархии до страницы
+    let depth = 0;
     while (currentNode) {
       const resolvedModes = currentNode.resolvedVariableModes || {};
       const explicitModes = currentNode.explicitVariableModes || {};
+      
+      console.log(`   [${depth}] Проверяем узел: ${currentNode.name} (${currentNode.type})`);
       
       // Проверяем, есть ли режим для этой коллекции на текущем узле
       const modeId = resolvedModes[targetCollection.id] || explicitModes[targetCollection.id];
@@ -1586,25 +1564,34 @@ function getModeForCollection(node, collectionName, savedVariables) {
         const mode = targetCollection.modes.find(m => m.modeId === modeId);
         
         if (mode) {
+          console.log(`   ✅ Найден режим "${mode.name}" на узле "${currentNode.name}"`);
           return mode.name;
         }
+      } else {
+        console.log(`   ⚠️ Режим не найден на узле "${currentNode.name}"`);
       }
       
       // Переходим к родителю
       if (currentNode.parent && currentNode.parent.type !== 'PAGE') {
         currentNode = currentNode.parent;
+        depth++;
       } else {
+        console.log(`   ⚠️ Достигли корня дерева (PAGE или null)`);
         break;
       }
     }
     
     // Не нашли режим - возвращаем первый режим из коллекции
     if (targetCollection.modes.length > 0) {
+      console.log(`   ⚠️ Режим не найден в иерархии, возвращаем первый режим: ${targetCollection.modes[0].name}`);
       return targetCollection.modes[0].name;
     }
     
+    console.log(`   ❌ У коллекции нет режимов`);
     return null;
   }
+  
+  console.log(`   ⚠️ Коллекция не найдена локально, используем savedVariables`);
   
   // Коллекция не найдена локально - используем savedVariables
   if (savedVariables[collectionName]) {
@@ -1612,32 +1599,41 @@ function getModeForCollection(node, collectionName, savedVariables) {
     if (collection['Colors']) {
       const firstMode = findFirstModeInGroup(collection['Colors']);
       if (firstMode) {
+        console.log(`   ✓ Найден режим из savedVariables: ${firstMode}`);
         return firstMode;
       }
     }
   }
   
+  console.log(`   ❌ Режим не найден`);
   return null;
 }
 
 // Функция для получения режима коллекции 1.Theme для узла
-function getThemeModeForNode(node, savedVariables) {
+async function getThemeModeForNode(node, savedVariables) {
+  console.log(`\n🎨 getThemeModeForNode: Определяем режим темы для узла "${node.name}"`);
+  
   // Находим название коллекции 1.Theme
   const themeCollectionName = Object.keys(savedVariables).find(name => 
     name.startsWith('1.') || name.startsWith('1 ')
   );
   
   if (!themeCollectionName) {
+    console.log(`   ⚠️ Коллекция 1.Theme не найдена, возвращаем "Light" по умолчанию`);
     return 'Light';
   }
   
-  const mode = getModeForCollection(node, themeCollectionName, savedVariables);
+  console.log(`   ✓ Коллекция темы: "${themeCollectionName}"`);
+  
+  const mode = await getModeForCollection(node, themeCollectionName, savedVariables);
   
   // Если не нашли режим для 1.Theme, возвращаем Light по умолчанию
   if (!mode) {
+    console.log(`   ⚠️ Режим не найден для "${themeCollectionName}", возвращаем "Light" по умолчанию`);
     return 'Light';
   }
   
+  console.log(`   ✅ Режим темы: "${mode}"\n`);
   return mode;
 }
 
@@ -1711,7 +1707,7 @@ function canApplyColorVariableToNode(variableName, node) {
  * Поиск подходящей цветовой переменной (Token Guard версия - ПОЛНАЯ)
  */
 // Функция для поиска цветовой переменной по hex значению и прозрачности
-function findColorVariable(hexColor, opacity, propertyType, savedVariables, node) {
+async function findColorVariable(hexColor, opacity, propertyType, savedVariables, node) {
   console.log(`🎨 Ищем цветовую переменную для ${propertyType}: ${hexColor} (opacity: ${Math.round(opacity * 100)}%)`);
   
   // Объявляем переменную для хранения имени коллекции 1.Theme
@@ -1723,11 +1719,39 @@ function findColorVariable(hexColor, opacity, propertyType, savedVariables, node
   let targetCollectionNumber = null;
   
   // Получаем требуемые scopes для этого свойства
-  const requiredScopes = PROPERTY_TO_SCOPES[propertyType] || [];
+  let requiredScopes = PROPERTY_TO_SCOPES[propertyType] || [];
+  
+  // ВАЖНО: Корректируем scopes для fills в зависимости от типа элемента
+  if (propertyType === 'fills' && node) {
+    const nodeType = node.type;
+    
+    // Для TEXT - только TEXT_FILL
+    if (nodeType === 'TEXT') {
+      requiredScopes = ['TEXT_FILL', 'ALL_SCOPES'];
+      console.log(`✓ Тип элемента: TEXT → scope: TEXT_FILL`);
+    }
+    // Для FRAME, COMPONENT, INSTANCE, SECTION - только FRAME_FILL
+    else if (['FRAME', 'COMPONENT', 'INSTANCE', 'SECTION', 'COMPONENT_SET'].includes(nodeType)) {
+      requiredScopes = ['FRAME_FILL', 'ALL_SCOPES'];
+      console.log(`✓ Тип элемента: ${nodeType} → scope: FRAME_FILL`);
+    }
+    // Для остальных (shapes: RECTANGLE, ELLIPSE, etc.) - только SHAPE_FILL
+    else {
+      requiredScopes = ['SHAPE_FILL', 'ALL_SCOPES'];
+      console.log(`✓ Тип элемента: ${nodeType} → scope: SHAPE_FILL`);
+    }
+  }
+  // Для strokes - аналогично
+  else if (propertyType === 'strokes' && node) {
+    const nodeType = node.type;
+    // strokes применяются ко всем типам, но для текста это редкость
+    console.log(`✓ Тип элемента для stroke: ${nodeType}`);
+  }
+  
   console.log(`✓ Требуемые scopes: [${requiredScopes.join(', ')}]`);
   
   // Получаем режим 1.Theme для узла
-  const themeMode = getThemeModeForNode(node, savedVariables);
+  const themeMode = await getThemeModeForNode(node, savedVariables);
   console.log(`✓ Режим 1.Theme для объекта: ${themeMode}`);
   
   // Собираем все цветовые переменные из всех коллекций
@@ -2219,14 +2243,24 @@ function findColorVariable(hexColor, opacity, propertyType, savedVariables, node
     // Ищем совпадения
     const themeMatchingVariables = [];
     
+    console.log(`\n🔍 Начинаем поиск совпадений в режиме "${themeMode}":`);
+    
     for (const variable of themeFilteredVariables) {
+      console.log(`\n   Проверяем переменную: ${variable.name}`);
+      console.log(`      Доступные режимы: ${Object.keys(variable.modes).filter(k => k !== 'key' && k !== 'id' && k !== 'scopes' && k !== 'hiddenFromPublishing' && k !== 'description').join(', ')}`);
+      
       // Проверяем ТОЛЬКО режим объекта (Light или Dark)
       const colorInMode = variable.modes[themeMode];
       
+      console.log(`      Цвет в режиме "${themeMode}": ${colorInMode || 'НЕТ ЗНАЧЕНИЯ'}`);
+      
       if (colorInMode && typeof colorInMode === 'string') {
         const parsed = parseColorString(colorInMode);
+        console.log(`      Parsed HEX: ${parsed.hex}, opacity: ${Math.round(parsed.opacity * 100)}%`);
+        console.log(`      Искомый HEX: ${hexColor}, opacity: ${Math.round(opacity * 100)}%`);
         
         if (colorsMatch(parsed.hex, parsed.opacity, hexColor, opacity)) {
+          console.log(`      ✅ СОВПАДЕНИЕ! Добавляем ${variable.name} в список`);
           themeMatchingVariables.push({
             name: variable.name,
             key: variable.key,
@@ -2239,8 +2273,11 @@ function findColorVariable(hexColor, opacity, propertyType, savedVariables, node
             hiddenFromPublishing: variable.hiddenFromPublishing || false,
             description: variable.description || ''
           });
-          console.log(`✅ Найдено совпадение в 1.Theme: ${variable.name} в режиме ${themeMode} (цвет: ${parsed.hex}, прозрачность: ${Math.round(parsed.opacity * 100)}%)`);
+        } else {
+          console.log(`      ❌ Не совпадает`);
         }
+      } else {
+        console.log(`      ⚠️ Нет значения в режиме "${themeMode}" или неправильный тип`);
       }
     }
     
@@ -2759,8 +2796,17 @@ figma.ui.onmessage = async function(msg) {
     } else if (msg.type === 'dsv-validate') {
       // Design System Validator - запуск проверки (упрощенная версия Token Guard)
       try {
+        console.log('\n\n🚀 ============================================');
         console.log('DSV: Запуск упрощенной проверки (Token Guard версия)');
+        console.log('============================================\n');
+        
         const result = await checkNumericVariables();
+        
+        console.log('\n\n✅ ============================================');
+        console.log(`DSV: Проверка завершена!`);
+        console.log(`   Проверено нод: ${result.checked}`);
+        console.log(`   Найдено ошибок: ${result.errors.length}`);
+        console.log('============================================\n');
         
         figma.ui.postMessage({
           type: 'dsv-validation-complete',
@@ -2774,7 +2820,9 @@ figma.ui.onmessage = async function(msg) {
           }
         });
       } catch (error) {
+        console.error('\n\n❌ ============================================');
         console.error('DSV: Ошибка при проверке:', error);
+        console.error('============================================\n');
         figma.ui.postMessage({
           type: 'dsv-validation-error',
           error: error.message || 'Неизвестная ошибка при проверке'
@@ -3250,6 +3298,11 @@ figma.ui.onmessage = async function(msg) {
       figma.closePlugin();
     }
   } catch (error) {
+    // Сбрасываем флаг проверки при ошибке
+    if (isCheckingInProgress) {
+      isCheckingInProgress = false;
+    }
+    
     // Отправляем информацию об ошибке в UI
     figma.ui.postMessage({
       type: 'error',
@@ -3959,6 +4012,9 @@ async function checkIcons(settings) {
     figma.ui.postMessage({ type: 'progress', message: 'Проверка завершена', percent: 100 });
     return results;
   } catch (error) {
+    // Сбрасываем флаг проверки при ошибке
+    isCheckingInProgress = false;
+    
     figma.ui.postMessage({
       type: 'error',
       message: `Ошибка при проверке иконок: ${error.message}`

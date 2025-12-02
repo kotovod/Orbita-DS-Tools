@@ -4542,6 +4542,13 @@ ${designSystemContext}
       if (loadingIndicator) loadingIndicator.style.display = 'block';
       if (resultsPanel) resultsPanel.style.display = 'none';
       
+      // Блокируем кнопку проверки на время выполнения
+      const validateButtonMain = document.getElementById('dsv-validate-button-main');
+      if (validateButtonMain) {
+        validateButtonMain.disabled = true;
+        validateButtonMain.textContent = 'Проверка...';
+      }
+      
       // Сбрасываем счётчик прогресса
       const progressCount = document.getElementById('dsv-progress-count');
       if (progressCount) progressCount.textContent = '0';
@@ -5298,6 +5305,10 @@ ${designSystemContext}
           message: message.message
         });
         
+        // Скрываем статус загрузки и прогресс
+        statusElement.style.display = 'none';
+        progressContainer.style.display = 'none';
+        
         // Сбрасываем флаг проверки и возвращаем кнопке исходный вид
         isCheckingInProgress = false;
         checkButton.textContent = 'Проверить';
@@ -5645,6 +5656,9 @@ ${designSystemContext}
         const loadingIndicator = document.getElementById('dsv-loading-indicator');
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         
+        // Очищаем предыдущие результаты
+        dsvCurrentReport = null;
+        
         // Показываем ошибку
         const resultsPanel = document.getElementById('dsv-results-panel');
         if (resultsPanel) {
@@ -5653,6 +5667,13 @@ ${designSystemContext}
             <div style="font-size: 12px; color: #AAAAAA;">${message.error || 'Неизвестная ошибка'}</div>
           </div>`;
           resultsPanel.style.display = 'block';
+        }
+        
+        // Разблокируем кнопку проверки
+        const validateButtonMain = document.getElementById('dsv-validate-button-main');
+        if (validateButtonMain) {
+          validateButtonMain.disabled = false;
+          validateButtonMain.textContent = 'Проверить';
         }
       } else if (message.type === 'dsv-bind-token-result') {
         // Design System Validator - результат привязки токена
@@ -5907,6 +5928,13 @@ ${designSystemContext}
         // Скрываем индикатор загрузки
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         
+        // Разблокируем кнопку проверки
+        const validateButtonMain = document.getElementById('dsv-validate-button-main');
+        if (validateButtonMain) {
+          validateButtonMain.disabled = false;
+          validateButtonMain.textContent = 'Проверить';
+        }
+        
         // Показываем результаты
         if (resultsPanel) resultsPanel.style.display = 'block';
         
@@ -5919,15 +5947,18 @@ ${designSystemContext}
         };
         dsvCurrentReport = report;
         
-        document.getElementById('dsv-total-nodes').textContent = report.totalNodes;
-        document.getElementById('dsv-total-issues').textContent = report.totalIssues;
+        const totalNodesEl = document.getElementById('dsv-total-nodes');
+        const totalIssuesEl = document.getElementById('dsv-total-issues');
+        
+        if (totalNodesEl) totalNodesEl.textContent = report.totalNodes;
+        if (totalIssuesEl) totalIssuesEl.textContent = report.totalIssues;
         
         // Отображаем список проблем
         if (report.issues && report.issues.length > 0) {
           if (issuesSection) issuesSection.style.display = 'block';
           
           // Очищаем список
-          issuesList.innerHTML = '';
+          if (issuesList) issuesList.innerHTML = '';
           
           // Группируем ошибки по нодам (как в Token Guard)
           const groupedErrors = {};
@@ -5989,7 +6020,7 @@ ${designSystemContext}
               }
             });
             
-            issuesList.appendChild(issueCard);
+            if (issuesList) issuesList.appendChild(issueCard);
           });
           
           // Добавляем обработчики на кнопки "Исправить"
