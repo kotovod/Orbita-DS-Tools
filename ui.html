@@ -2229,18 +2229,60 @@
         </button>
       </div>
 
-      <!-- Статус токенов (всегда виден) -->
-      <div id="dsv-tokens-status-main" class="unified-message unified-message-info unified-text-small" style="display: none;">
-        <span id="dsv-tokens-status-main-text">Токены не загружены</span>
-      </div>
-
       <!-- Панель настроек (скрыта по умолчанию) -->
       <div id="dsv-settings-panel" style="display: none; margin-bottom: 16px;">
+      
+      <!-- Управление токенами -->
+      <div style="margin-bottom: 16px; padding: 16px; background: #2A2A32; border-radius: 8px; border: 1px solid #505059;">
+        <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-bottom: 12px;">
+          📦 Управление токенами
+      </div>
+
+        <!-- Статус токенов -->
+        <div style="margin-bottom: 12px; padding: 10px; background: #1E1E26; border-radius: 6px;">
+          <div id="dsv-tokens-status-text" style="font-size: 11px; color: #AAAAAA;">Токены не загружены</div>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div style="margin-bottom: 12px;">
+          <button id="dsv-import-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px;">
+            📥 Импорт токенов из файла
+              </button>
+      </div>
+
+        <!-- Textarea с JSON токенов -->
+        <details style="margin-top: 12px;">
+          <summary style="font-size: 11px; color: #FFFFFF; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;">
+            <span style="color: #F86025;">▸</span> Просмотр JSON токенов
+          </summary>
+          <div style="margin-top: 12px;">
+            <textarea id="dsv-tokens-json-textarea" 
+                      readonly
+                      style="width: 100%; min-height: 200px; max-height: 400px; 
+                             padding: 12px; background: #1E1E26; border: 1px solid #505059; 
+                             border-radius: 6px; color: #FFFFFF; font-size: 10px; 
+                             font-family: 'SF Mono', Monaco, monospace; resize: vertical;"
+                      placeholder="JSON токенов будет здесь после импорта..."></textarea>
+            <button id="dsv-copy-json-button" class="unified-button unified-button-tertiary" style="width: 100%; margin-top: 8px; font-size: 11px; display: none;">
+              📋 Копировать JSON
+              </button>
+              </div>
+        </details>
+
+        <div style="font-size: 10px; color: #AAAAAA; margin-top: 12px; line-height: 1.4;">
+          <strong style="color: #FFFFFF;">Как использовать:</strong><br>
+          1. Откройте файл библиотеки с токенами<br>
+          2. Нажмите "📥 Импорт" — токены сохранятся в плагин<br>
+          3. Токены будут доступны во <strong style="color: #FFFFFF;">всех файлах Figma</strong> для автоисправления<br>
+          <br>
+          <strong style="color: #F86025;">Альтернативный способ:</strong> Экспортируйте JSON и загрузите в других проектах через "📂 Загрузить JSON файл"
+              </div>
+              </div>
       
       <!-- Заголовок с описанием -->
       <div class="unified-text-small unified-text-muted unified-mb-16" style="line-height: 1.5;">
         Проверка использования Figma Variables (дизайн-токенов) в компонентах
-      </div>
+            </div>
 
       <!-- Выбор режима проверки -->
       <div class="unified-mb-16">
@@ -2249,55 +2291,7 @@
           <button id="dsv-mode-local" class="dsv-mode-button unified-button unified-button-secondary" data-mode="local" style="flex: 1;">Local</button>
           <button id="dsv-mode-remote" class="dsv-mode-button unified-button unified-button-secondary" data-mode="remote" style="flex: 1;">Remote</button>
           <button id="dsv-mode-all" class="dsv-mode-button unified-button unified-button-primary" data-mode="all" style="flex: 1;">All</button>
-        </div>
-      </div>
-
-      <!-- Альтернатива: Загрузка JSON с токенами -->
-      <div style="margin-bottom: 16px;">
-        <details style="background: #2A2A32; border-radius: 8px; padding: 12px;">
-          <summary style="font-size: 12px; color: #FFFFFF; font-weight: 600; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;">
-            <span style="color: #F86025;">▸</span> Альтернатива: Загрузить JSON с токенами
-          </summary>
-          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #505059;">
-            
-            <!-- Экспорт токенов из текущего файла -->
-            <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #505059;">
-              <div style="font-size: 11px; color: #AAAAAA; margin-bottom: 8px; line-height: 1.4;">
-                <strong style="color: #FFFFFF;">Шаг 1:</strong> Экспортируйте токены из текущего Figma файла
-              </div>
-              <button id="dsv-export-tokens-button" class="unified-button unified-button-secondary" style="width: 100%;">
-                📤 Экспортировать токены в JSON
-              </button>
-              <div id="dsv-export-status" style="font-size: 10px; color: #AAAAAA; margin-top: 6px; display: none;">
-                <span id="dsv-export-status-text"></span>
-              </div>
-            </div>
-
-            <!-- Загрузка JSON -->
-            <div>
-              <div style="font-size: 11px; color: #AAAAAA; margin-bottom: 8px; line-height: 1.4;">
-                <strong style="color: #FFFFFF;">Шаг 2:</strong> Или загрузите готовый JSON файл с токенами
-                <a href="#" id="dsv-show-json-format" style="color: #F86025; text-decoration: none;">Формат →</a>
-              </div>
-              <input type="file" id="dsv-tokens-json-file" accept=".json" style="display: none;">
-              <div style="display: flex; gap: 8px;">
-                <button id="dsv-load-tokens-json-button" class="unified-button unified-button-secondary" style="flex: 1;">
-                  Загрузить JSON
-                </button>
-                <button id="dsv-clear-tokens-json-button" class="unified-button unified-button-secondary" style="flex: 1;" disabled>
-                  🔄 Заменить
-                </button>
-              </div>
-              <div id="dsv-tokens-json-status" style="font-size: 10px; color: #AAAAAA; margin-top: 6px; display: none;">
-                <span id="dsv-tokens-json-status-text">Файл не загружен</span>
-              </div>
-                <div style="font-size: 10px; color: #888; margin-top: 4px; line-height: 1.3;">
-                  Токены сохраняются автоматически и загружаются при следующем запуске
-              </div>
-            </div>
-
           </div>
-        </details>
       </div>
 
         <!-- Подсказка для пользователя -->
@@ -2409,31 +2403,25 @@
         
         <!-- Сводка результатов -->
         <div id="dsv-summary" class="unified-card unified-mb-16">
-          <div class="unified-section-title">Сводка</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; font-size: 11px;">
             <div style="display: flex; justify-content: space-between;">
-              <span class="unified-text-muted">Проверено элементов:</span>
-              <span id="dsv-total-nodes" style="color: #FFFFFF; font-weight: 600;">0</span>
+              <span class="unified-text-muted">Проверено элементов: <span id="dsv-total-nodes" style="color: #FFFFFF; font-weight: 600;">0</span></span>
             </div>
             <div style="display: flex; justify-content: space-between;">
-              <span class="unified-text-muted">Найдено проблем:</span>
-              <span id="dsv-total-issues" style="color: #F44336; font-weight: 600;">0</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span class="unified-text-muted">С токенами:</span>
-              <span id="dsv-with-variables" style="color: #4CAF50; font-weight: 600;">0</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span class="unified-text-muted">Без токенов:</span>
-              <span id="dsv-without-variables" class="unified-text-primary" style="font-weight: 600;">0</span>
+              <span class="unified-text-muted">Найдено проблем: <span id="dsv-total-issues" style="color: #F44336; font-weight: 600;">0</span></span>
             </div>
           </div>
         </div>
 
         <!-- Список проблем -->
         <div id="dsv-issues-section" style="display: none;">
-          <div class="unified-section-title">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="unified-section-title" style="margin-bottom: 0;">
             ⚠️ Найденные проблемы
+            </div>
+            <button id="dsv-fix-all-button" class="unified-button unified-button-primary" style="font-size: 11px; padding: 6px 12px; display: none;">
+              🔧 Исправить все
+            </button>
           </div>
           <div id="dsv-issues-list" class="unified-results-container" style="max-height: 300px; overflow-y: auto;">
             <!-- Issues will be inserted here -->
@@ -4425,7 +4413,82 @@ ${designSystemContext}
       const validateButtonMain = document.getElementById('dsv-validate-button-main');
       const modeButtons = document.querySelectorAll('.dsv-mode-button');
       const validateButton = document.getElementById('dsv-validate-button');
-      // exportButton удалён
+      
+      // Новые элементы для импорта токенов
+      const importTokensButton = document.getElementById('dsv-import-tokens-button');
+      const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+      const fixAllButton = document.getElementById('dsv-fix-all-button');
+      
+      // Элементы для JSON управления
+      const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+      const copyJsonButton = document.getElementById('dsv-copy-json-button');
+      
+      // Обработчик кнопки импорта токенов
+      if (importTokensButton) {
+        importTokensButton.addEventListener('click', () => {
+          debugLog('DSV: Запрос импорта токенов');
+          
+          // Показываем статус загрузки
+          if (tokensStatusText) {
+            tokensStatusText.textContent = 'Импортирую токены...';
+            importTokensButton.disabled = true;
+          }
+          
+          // Отправляем запрос на импорт
+          parent.postMessage({
+            pluginMessage: {
+              type: 'dsv-import-tokens'
+            }
+          }, '*');
+        });
+      }
+      
+      // Обработчик кнопки копирования JSON
+      if (copyJsonButton && tokensJsonTextarea) {
+        copyJsonButton.addEventListener('click', () => {
+          tokensJsonTextarea.select();
+          document.execCommand('copy');
+          
+          const originalText = copyJsonButton.textContent;
+          copyJsonButton.textContent = '✅ Скопировано!';
+          setTimeout(() => {
+            copyJsonButton.textContent = originalText;
+          }, 2000);
+        });
+      }
+      
+      // Обработчик кнопки "Исправить все"
+      if (fixAllButton) {
+        fixAllButton.addEventListener('click', () => {
+          if (!dsvCurrentReport || !dsvCurrentReport.issues) {
+            return;
+          }
+          
+          // Фильтруем только проблемы, которые можно исправить (с suggestedToken)
+          const fixableIssues = dsvCurrentReport.issues.filter(issue => issue.suggestedToken);
+          
+          if (fixableIssues.length === 0) {
+            alert('Нет проблем, которые можно исправить автоматически');
+            return;
+          }
+          
+          if (confirm(`Исправить ${fixableIssues.length} проблем автоматически?`)) {
+            debugLog(`DSV: Запрос автоисправления ${fixableIssues.length} проблем`);
+            
+            // Показываем индикатор загрузки
+            fixAllButton.disabled = true;
+            fixAllButton.textContent = 'Исправляю...';
+            
+            // Отправляем запрос на автоисправление
+            parent.postMessage({
+              pluginMessage: {
+                type: 'dsv-fix-all',
+                issues: fixableIssues
+              }
+            }, '*');
+          }
+        });
+      }
       
       // Обработчик кнопки настроек
       if (settingsButton && settingsPanel) {
@@ -4742,15 +4805,10 @@ ${designSystemContext}
       const totalIssuesEl = document.getElementById('dsv-total-issues');
       if (totalIssuesEl) totalIssuesEl.textContent = report.totalIssues || 0;
       
-      const withVariablesEl = document.getElementById('dsv-with-variables');
-      if (withVariablesEl) withVariablesEl.textContent = report.nodesWithVariables || 0;
-      
-      const withoutVariablesEl = document.getElementById('dsv-without-variables');
-      if (withoutVariablesEl) withoutVariablesEl.textContent = report.nodesWithoutVariables || 0;
-      
       // Отображаем список проблем
       const issuesSection = document.getElementById('dsv-issues-section');
       const issuesList = document.getElementById('dsv-issues-list');
+      const fixAllButton = document.getElementById('dsv-fix-all-button');
       
       if (report.issues && report.issues.length > 0) {
         if (issuesSection) issuesSection.style.display = 'block';
@@ -4762,8 +4820,18 @@ ${designSystemContext}
             issuesList.appendChild(issueCard);
           });
         }
+        
+        // Показываем кнопку "Fix All" если есть исправляемые проблемы
+        const fixableIssues = report.issues.filter(issue => issue.suggestedToken);
+        if (fixAllButton && fixableIssues.length > 0) {
+          fixAllButton.style.display = 'inline-block';
+          fixAllButton.textContent = `🔧 Исправить все (${fixableIssues.length})`;
+        } else if (fixAllButton) {
+          fixAllButton.style.display = 'none';
+        }
       } else {
         if (issuesSection) issuesSection.style.display = 'none';
+        if (fixAllButton) fixAllButton.style.display = 'none';
       }
     }
     
@@ -4829,8 +4897,10 @@ ${designSystemContext}
       card.appendChild(header);
       card.appendChild(description);
       
-      // Если есть предложенный токен - показываем его
-      if (issue.suggestedToken && issue.type === 'No Variable') {
+      // Если есть предложенный токен - показываем его и кнопку
+      if (issue.suggestedToken) {
+        console.log('🔍 DEBUG UI: Показываем кнопку для', issue.property, 'токен:', issue.suggestedToken);
+        
         const tokenSuggestion = document.createElement('div');
         tokenSuggestion.style.cssText = 'margin-top: 8px; padding: 8px; background: rgba(76, 175, 80, 0.1); border-radius: 6px; border: 1px solid rgba(76, 175, 80, 0.3);';
         
@@ -4945,14 +5015,15 @@ ${designSystemContext}
       
       const message = event.data.pluginMessage;
       
-      // Логируем все сообщения для отладки
-      if (message.type === 'markdown-export-progress' || message.type === 'markdown-export-result') {
-        console.log('Получено сообщение от плагина:', message.type, message);
-      }
-      
+      // Проверяем что message существует и имеет type
       if (!message || !message.type) {
         debugWarn('Получено сообщение без типа:', message);
         return;
+      }
+      
+      // Логируем все сообщения для отладки
+      if (message.type === 'markdown-export-progress' || message.type === 'markdown-export-result') {
+        console.log('Получено сообщение от плагина:', message.type, message);
       }
       
       if (message.type === 'set-mode') {
@@ -5546,6 +5617,18 @@ ${designSystemContext}
       } else if (message.type === 'dsv-validation-result') {
         // Design System Validator - результаты проверки
         debugLog('Design System Validator: Получены результаты проверки', message.report);
+        
+        // DEBUG: Проверяем suggestedToken в первой проблеме
+        if (message.report.issues && message.report.issues.length > 0) {
+          console.log('🔍 DEBUG UI: Первая проблема:', {
+            type: message.report.issues[0].type,
+            property: message.report.issues[0].property,
+            value: message.report.issues[0].value,
+            hasSuggestedToken: !!message.report.issues[0].suggestedToken,
+            suggestedToken: message.report.issues[0].suggestedToken
+          });
+        }
+        
         displayDSVResults(message.report);
       } else if (message.type === 'dsv-validation-progress') {
         // Design System Validator - обновление прогресса
@@ -5718,6 +5801,252 @@ ${designSystemContext}
         if (clearTokensJsonButton) {
           clearTokensJsonButton.disabled = false;
         }
+      } else if (message.type === 'dsv-tokens-imported') {
+        // Design System Validator - токены импортированы
+        debugLog('DSV: Токены импортированы', message.count);
+        
+        const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const importTokensButton = document.getElementById('dsv-import-tokens-button');
+        const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const copyJsonButton = document.getElementById('dsv-copy-json-button');
+        
+        if (tokensStatusText) {
+          tokensStatusText.textContent = `Загружено токенов: ${message.count}`;
+          tokensStatusText.style.color = '#4CAF50';
+        }
+        
+        if (importTokensButton) {
+          importTokensButton.disabled = false;
+        }
+        
+        // Показываем JSON в textarea
+        if (tokensJsonTextarea && message.json) {
+          tokensJsonTextarea.value = message.json;
+          if (copyJsonButton) {
+            copyJsonButton.style.display = 'block';
+          }
+        }
+      } else if (message.type === 'dsv-json-export-ready') {
+        // Design System Validator - JSON готов к экспорту
+        debugLog('DSV: JSON готов к экспорту');
+        
+        // Скачиваем файл
+        const blob = new Blob([message.json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = message.filename || `figma-tokens-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Небольшая пауза перед alert (чтобы скачивание началось)
+        setTimeout(() => {
+          alert('✅ Токены экспортированы в JSON файл!');
+        }, 100);
+      } else if (message.type === 'dsv-json-exported') {
+        // Design System Validator - JSON экспортирован
+        debugLog('DSV: JSON экспортирован');
+        
+        // Скачиваем файл
+        const jsonString = JSON.stringify(message.tokensData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `figma-tokens-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('✅ Токены экспортированы в JSON файл!');
+      } else if (message.type === 'dsv-json-loaded') {
+        // Design System Validator - JSON загружен из файла
+        debugLog('DSV: JSON загружен', message.count);
+        
+        const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const copyJsonButton = document.getElementById('dsv-copy-json-button');
+        
+        if (tokensStatusText) {
+          tokensStatusText.textContent = `Загружено токенов: ${message.count} (из JSON файла)`;
+          tokensStatusText.style.color = '#4CAF50';
+        }
+        
+        // Показываем JSON в textarea
+        if (tokensJsonTextarea && message.tokensData) {
+          tokensJsonTextarea.value = JSON.stringify(message.tokensData, null, 2);
+          if (copyJsonButton) {
+            copyJsonButton.style.display = 'block';
+          }
+        }
+        
+        alert('✅ Токены загружены из JSON файла!');
+      } else if (message.type === 'dsv-tokens-not-found') {
+        // Design System Validator - токены не найдены при запуске
+        debugLog('DSV: Токены не найдены в памяти');
+        
+        const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        
+        if (tokensStatusText) {
+          tokensStatusText.textContent = 'Токены не загружены';
+          tokensStatusText.style.color = '#AAAAAA';
+        }
+      } else if (message.type === 'dsv-validation-complete') {
+        // Design System Validator - валидация завершена (новый формат)
+        debugLog('DSV: Валидация завершена', message.data);
+        
+        const loadingIndicator = document.getElementById('dsv-loading-indicator');
+        const resultsPanel = document.getElementById('dsv-results-panel');
+        const issuesSection = document.getElementById('dsv-issues-section');
+        const issuesList = document.getElementById('dsv-issues-list');
+        const fixAllButton = document.getElementById('dsv-fix-all-button');
+        
+        // Скрываем индикатор загрузки
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        // Показываем результаты
+        if (resultsPanel) resultsPanel.style.display = 'block';
+        
+        // Новый формат данных
+        const data = message.data;
+        const report = {
+          totalNodes: data.checked,
+          totalIssues: data.errors.length,
+          issues: data.errors
+        };
+        dsvCurrentReport = report;
+        
+        document.getElementById('dsv-total-nodes').textContent = report.totalNodes;
+        document.getElementById('dsv-total-issues').textContent = report.totalIssues;
+        
+        // Отображаем список проблем
+        if (report.issues && report.issues.length > 0) {
+          if (issuesSection) issuesSection.style.display = 'block';
+          
+          // Очищаем список
+          issuesList.innerHTML = '';
+          
+          // Группируем ошибки по нодам (как в Token Guard)
+          const groupedErrors = {};
+          report.issues.forEach(error => {
+            const key = error.nodeId;
+            if (!groupedErrors[key]) {
+              groupedErrors[key] = {
+                nodeName: error.nodeName,
+                nodeId: error.nodeId,
+                errors: []
+              };
+            }
+            groupedErrors[key].errors.push(error);
+          });
+          
+          // Создаём карточки для каждой ноды
+          Object.values(groupedErrors).forEach(group => {
+            const issueCard = document.createElement('div');
+            issueCard.className = 'unified-error-card';
+            issueCard.style.cursor = 'pointer';
+            
+            // Список ошибок для этой ноды
+            const errorsList = group.errors.map(err => {
+              const tokenInfo = err.suggestedToken ? 
+                ` → <span style="color: #4CAF50;">${err.suggestedToken.name}</span>` : '';
+              return `<div style="font-size: 10px; color: #AAAAAA; margin-top: 2px;">
+                • ${err.property}: ${err.value}${tokenInfo}
+              </div>`;
+            }).join('');
+            
+            issueCard.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 12px; color: #FF9800; font-weight: 600; margin-bottom: 4px;">
+                    ${group.nodeName}
+                  </div>
+                  <div style="font-size: 11px; color: #FFFFFF; margin-bottom: 4px;">
+                    ${group.errors.length} ошибок
+                  </div>
+                  ${errorsList}
+                </div>
+                <button class="dsv-fix-node-button unified-button unified-button-primary" 
+                        data-node-id="${group.nodeId}" 
+                        style="font-size: 10px; padding: 6px 12px; margin-left: 8px; flex-shrink: 0; width: auto; white-space: nowrap;">
+                  🔧 Исправить
+                </button>
+              </div>
+            `;
+            
+            // Обработчик клика на карточку (переход к элементу)
+            issueCard.addEventListener('click', (e) => {
+              if (!e.target.classList.contains('dsv-fix-node-button')) {
+                parent.postMessage({
+                  pluginMessage: {
+                    type: 'dsv-focus-node',
+                    nodeId: group.nodeId
+                  }
+                }, '*');
+              }
+            });
+            
+            issuesList.appendChild(issueCard);
+          });
+          
+          // Добавляем обработчики на кнопки "Исправить"
+          document.querySelectorAll('.dsv-fix-node-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const nodeId = button.getAttribute('data-node-id');
+              
+              // Находим все ошибки для этой ноды
+              const nodeErrors = report.issues.filter(err => err.nodeId === nodeId);
+              
+              // Отправляем запрос на исправление всех ошибок ноды
+              parent.postMessage({
+                pluginMessage: {
+                  type: 'dsv-fix-node-errors',
+                  errors: nodeErrors
+                }
+              }, '*');
+            });
+          });
+          
+          // Показываем кнопку "Исправить все" если есть исправляемые проблемы
+          const fixableCount = report.issues.filter(i => i.suggestedToken).length;
+          if (fixAllButton && fixableCount > 0) {
+            fixAllButton.style.display = 'inline-block';
+            fixAllButton.textContent = `🔧 Исправить все (${fixableCount})`;
+          }
+        } else {
+          if (issuesSection) issuesSection.style.display = 'none';
+          if (fixAllButton) fixAllButton.style.display = 'none';
+        }
+      } else if (message.type === 'dsv-fix-success') {
+        // Design System Validator - проблема исправлена
+        debugLog('DSV: Проблема исправлена', message.issueId);
+        
+        // Перезапускаем проверку чтобы обновить результаты
+        setTimeout(() => {
+          runDSVValidation();
+        }, 500);
+      } else if (message.type === 'dsv-fix-all-complete') {
+        // Design System Validator - массовое исправление завершено
+        debugLog('DSV: Массовое исправление завершено', message.results);
+        
+        const fixAllButton = document.getElementById('dsv-fix-all-button');
+        
+        if (fixAllButton) {
+          fixAllButton.disabled = false;
+          fixAllButton.textContent = '🔧 Исправить все';
+        }
+        
+        // Показываем результаты
+        alert(`Исправлено: ${message.results.fixed}\nОшибок: ${message.results.failed}\nВсего: ${message.results.total}`);
+        
+        // Перезапускаем проверку
+        setTimeout(() => {
+          runDSVValidation();
+        }, 500);
       } else if (message.type === 'dsv-tokens-status') {
         // Design System Validator - статус токенов при инициализации
         debugLog('Design System Validator: Статус токенов', message);

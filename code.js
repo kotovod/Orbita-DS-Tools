@@ -26,6 +26,2282 @@ function debugWarn(...args) {
 // Хранилище для загруженных токенов (JSON) в памяти плагина
 let savedTokensFromJson = null;
 
+// ============================================
+// TOKEN STORAGE & MATCHING FUNCTIONS (из Token Guard)
+// ============================================
+
+/**
+ * Функция для разрешения алиасов и получения реального значения
+ */
+function resolveVariableValue(value, allVariables) {
+  if (value && typeof value === 'object' && value.type === 'VARIABLE_ALIAS') {
+    const aliasedVariable = allVariables.find(v => v.id === value.id);
+    if (aliasedVariable) {
+      const modeId = Object.keys(aliasedVariable.valuesByMode)[0];
+      const aliasedValue = aliasedVariable.valuesByMode[modeId];
+      return resolveVariableValue(aliasedValue, allVariables);
+    }
+  }
+  return value;
+}
+
+/**
+ * Функция для получения hex цвета из RGB
+ */
+function rgbToHex(r, g, b) {
+  const toHex = (value) => {
+    const hex = Math.round(value * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+
+/**
+ * Функция для рекурсивного разрешения цветовых алиасов (ТОЧНАЯ КОПИЯ из Token Guard)
+ */
+function resolveColorAlias(value, modeId, depth = 0, debug = false) {
+  if (debug) {
+    console.log(`🔍 resolveColorAlias (depth=${depth}):`, {
+      hasRGB: value && value.r !== undefined,
+      isAlias: value && value.type === 'VARIABLE_ALIAS',
+      value: value
+    });
+  }
+  
+  // Защита от бесконечной рекурсии
+  if (depth > 10) {
+    console.warn('⚠️ Превышена глубина разрешения алиасов');
+    return null;
+  }
+  
+  // Базовый случай: это RGB цвет
+  if (value && value.r !== undefined && value.g !== undefined && value.b !== undefined) {
+    const alpha = value.a !== undefined ? value.a : 1;
+    const hexResult = rgbToHex(value.r, value.g, value.b) + (alpha < 1 ? ` (${Math.round(alpha * 100)}%)` : '');
+    if (debug) {
+      console.log(`✅ resolveColorAlias: RGB → ${hexResult}`);
+    }
+    return hexResult;
+  }
+  
+  // Это алиас - разрешаем рекурсивно
+  if (value && value.type === 'VARIABLE_ALIAS' && value.id) {
+    try {
+      const aliasedVar = figma.variables.getVariableById(value.id);
+      
+      if (!aliasedVar) {
+        console.warn(`⚠️ resolveColorAlias: Не удалось найти переменную по ID: ${value.id}`);
+        return null;
+      }
+      
+      if (debug) {
+        console.log(`✓ resolveColorAlias: Найдена переменная "${aliasedVar.name}"`);
+      }
+      
+      // Пытаемся получить значение для того же режима
+      let aliasedValue = aliasedVar.valuesByMode[modeId];
+      
+      if (debug) {
+        console.log(`   Ищем в режиме ${modeId}: ${aliasedValue ? 'найдено' : 'НЕ найдено'}`);
+      }
+      
+      // Если в этом режиме нет значения, берём из первого доступного
+      if (!aliasedValue) {
+        const firstModeId = Object.keys(aliasedVar.valuesByMode)[0];
+        aliasedValue = aliasedVar.valuesByMode[firstModeId];
+        if (debug) {
+          console.log(`   Используем первый режим ${firstModeId}: ${aliasedValue ? 'найдено' : 'НЕ найдено'}`);
+        }
+      }
+      
+      if (!aliasedValue) {
+        console.warn(`⚠️ Не удалось разрешить алиас: ${aliasedVar.name}`);
+        return null;
+      }
+      
+      console.log(`   aliasedValue:`, aliasedValue);
+      
+      // Рекурсивно разрешаем дальше
+      return resolveColorAlias(aliasedValue, modeId, depth + 1, debug);
+    } catch (error) {
+      console.error('❌ Ошибка при разрешении алиаса:', error);
+      return null;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Функция для рекурсивного разрешения цветовых алиасов с кэшем
+ * @param {*} value - значение переменной (RGB или VARIABLE_ALIAS)
+ * @param {string} modeId - ID режима
+ * @param {Array} allVariables - все локальные переменные для резолва алиасов
+ * @param {number} depth - глубина рекурсии
+ */
+function resolveColorAliasWithCache(value, modeId, allVariables, depth = 0) {
+  if (depth > 10) {
+    console.warn('⚠️ Превышена глубина разрешения алиасов');
+    return null;
+  }
+  
+  // Базовый случай: это RGB цвет
+  if (value && value.r !== undefined && value.g !== undefined && value.b !== undefined) {
+    const alpha = value.a !== undefined ? value.a : 1;
+    return rgbToHex(value.r, value.g, value.b) + (alpha < 1 ? ` (${Math.round(alpha * 100)}%)` : '');
+  }
+  
+  // Это алиас - разрешаем рекурсивно
+  if (value && value.type === 'VARIABLE_ALIAS' && value.id) {
+    // Ищем переменную в кэше (массиве всех переменных)
+    const aliasedVar = allVariables.find(v => v.id === value.id);
+    
+    if (!aliasedVar) {
+      // Remote переменная - пропускаем без лишних логов
+      return null;
+    }
+    
+    // Пытаемся получить значение для того же режима
+    let aliasedValue = aliasedVar.valuesByMode[modeId];
+    
+    // Если в этом режиме нет значения, берём из первого доступного
+    if (!aliasedValue) {
+      const firstModeId = Object.keys(aliasedVar.valuesByMode)[0];
+      aliasedValue = aliasedVar.valuesByMode[firstModeId];
+    }
+    
+    if (!aliasedValue) {
+      console.warn(`⚠️ Не удалось разрешить алиас: ${aliasedVar.name}`);
+      return null;
+    }
+    
+    // Рекурсивно разрешаем дальше
+    return resolveColorAliasWithCache(aliasedValue, modeId, allVariables, depth + 1);
+  }
+  
+  return null;
+}
+
+/**
+ * Функция для создания вложенной структуры из пути
+ */
+function setNestedValue(obj, path, valueData) {
+  const parts = path.split('/');
+  let current = obj;
+  
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i];
+    if (!current[part]) {
+      current[part] = {};
+    }
+    current = current[part];
+  }
+  
+  const lastPart = parts[parts.length - 1];
+  current[lastPart] = valueData;
+}
+
+/**
+ * Функция для сортировки коллекций
+ */
+function sortCollections(variablesByCollection) {
+  const entries = Object.entries(variablesByCollection);
+  
+  entries.sort((a, b) => {
+    const nameA = a[0];
+    const nameB = b[0];
+    
+    const startsWithNumberA = /^\d/.test(nameA);
+    const startsWithNumberB = /^\d/.test(nameB);
+    
+    if (startsWithNumberA && startsWithNumberB) {
+      const matchA = nameA.match(/^(\d+(?:\.\d+)?)/);
+      const matchB = nameB.match(/^(\d+(?:\.\d+)?)/);
+      
+      if (matchA && matchB) {
+        const numA = parseFloat(matchA[1]);
+        const numB = parseFloat(matchB[1]);
+        
+        if (numA !== numB) {
+          return numA - numB;
+        }
+      }
+      
+      return nameA.localeCompare(nameB);
+    }
+    
+    if (startsWithNumberA) return -1;
+    if (startsWithNumberB) return 1;
+    
+    return nameA.localeCompare(nameB);
+  });
+  
+  const sorted = {};
+  for (const [key, value] of entries) {
+    sorted[key] = value;
+  }
+  
+  return sorted;
+}
+
+/**
+ * Импорт токенов из текущего файла Figma
+ */
+async function importTokensFromCurrentFile() {
+  try {
+    console.log('📥 DSV: Импорт токенов из текущего файла...');
+    
+    // Получаем все локальные переменные и коллекции (СИНХРОННО как в Token Guard)
+    const localVariables = figma.variables.getLocalVariables();
+    const localCollections = figma.variables.getLocalVariableCollections();
+    
+    if (localVariables.length === 0) {
+      throw new Error('В текущем файле нет переменных для импорта!');
+    }
+    
+    console.log(`✓ Найдено ${localVariables.length} переменных в ${localCollections.length} коллекциях`);
+    
+    // Создаём карту коллекций для быстрого доступа
+    const collectionsMap = {};
+    localCollections.forEach(collection => {
+      collectionsMap[collection.id] = collection.name;
+    });
+    
+    // Собираем числовые и цветовые переменные с группировкой по коллекциям
+    const variablesByCollection = {};
+    let count = 0;
+    
+    for (const variable of localVariables) {
+      // Получаем название коллекции
+      const collectionName = collectionsMap[variable.variableCollectionId] || 'Без коллекции';
+      
+      // Создаём объект коллекции, если его нет
+      if (!variablesByCollection[collectionName]) {
+        variablesByCollection[collectionName] = {};
+      }
+      
+      // Обрабатываем числовые переменные
+      if (variable.resolvedType === 'FLOAT') {
+        // Получаем значение из первого режима
+        const modeId = Object.keys(variable.valuesByMode)[0];
+        const rawValue = variable.valuesByMode[modeId];
+        
+        // Разрешаем алиасы
+        const resolvedValue = resolveVariableValue(rawValue, localVariables);
+        
+        // Проверяем что это действительно число
+        if (typeof resolvedValue !== 'number') {
+          continue;
+        }
+        
+        // Создаем данные переменной
+        const variableData = {
+          value: resolvedValue,
+          key: variable.key,
+          id: variable.id,
+          scopes: variable.scopes || [],
+          hiddenFromPublishing: variable.hiddenFromPublishing || false,
+          description: variable.description || ''
+        };
+        
+        // Если в имени есть слэши, создаём вложенную структуру внутри коллекции
+        if (variable.name.includes('/')) {
+          setNestedValue(variablesByCollection[collectionName], variable.name, variableData);
+        } else {
+          // Если слэшей нет, сохраняем в корень коллекции
+          variablesByCollection[collectionName][variable.name] = variableData;
+        }
+        
+        count++;
+      }
+      
+      // Обрабатываем цветовые переменные (ТОЧНАЯ КОПИЯ из Token Guard)
+      else if (variable.resolvedType === 'COLOR') {
+        // Получаем коллекцию для получения списка режимов
+        const collection = localCollections.find(c => c.id === variable.variableCollectionId);
+        
+        if (!collection) {
+          continue;
+        }
+        
+        // Создаем объект для хранения значений во всех режимах
+        const colorData = {
+          key: variable.key,
+          id: variable.id,
+          scopes: variable.scopes || [],
+          hiddenFromPublishing: variable.hiddenFromPublishing || false,
+          description: variable.description || ''
+        };
+        
+        // Собираем значения для каждого режима
+        collection.modes.forEach(mode => {
+          const rawValue = variable.valuesByMode[mode.modeId];
+          
+          if (rawValue) {
+            // Разрешаем алиасы рекурсивно до конечного HEX значения
+            const resolvedColor = resolveColorAlias(rawValue, mode.modeId, 0, false);
+            
+            if (resolvedColor) {
+              colorData[mode.name] = resolvedColor;
+            } else {
+              console.warn(`⚠️ Не удалось разрешить цвет: ${variable.name} → ${mode.name}`);
+            }
+          }
+        });
+        
+        // Создаем группу "Colors" внутри коллекции, если её нет
+        if (!variablesByCollection[collectionName]['Colors']) {
+          variablesByCollection[collectionName]['Colors'] = {};
+        }
+        
+        // Если в имени есть слэши, создаём вложенную структуру
+        if (variable.name.includes('/')) {
+          setNestedValue(variablesByCollection[collectionName]['Colors'], variable.name, colorData);
+        } else {
+          variablesByCollection[collectionName]['Colors'][variable.name] = colorData;
+        }
+        
+        count++;
+      }
+    }
+    
+    console.log(`✅ DSV: Импортировано ${count} токенов`);
+    
+    if (count === 0) {
+      throw new Error('В файле нет токенов для импорта!');
+    }
+    
+    const sortedVariables = sortCollections(variablesByCollection);
+    
+    return {
+      variables: sortedVariables,
+      count: count,
+      timestamp: Date.now()
+    };
+    
+  } catch (error) {
+    console.error('❌ DSV: Ошибка импорта токенов:', error);
+    throw error;
+  }
+}
+
+// Соответствие свойств нод и групп переменных
+const PROPERTY_TO_GROUP = {
+  'paddingLeft': 'Spacing',
+  'paddingRight': 'Spacing',
+  'paddingTop': 'Spacing',
+  'paddingBottom': 'Spacing',
+  'paddingHorizontal': 'Spacing',  // Группированный padding
+  'paddingVertical': 'Spacing',    // Группированный padding
+  'itemSpacing': 'Spacing',
+  'cornerRadius': 'Rounding',
+  'topLeftRadius': 'Rounding',
+  'topRightRadius': 'Rounding',
+  'bottomLeftRadius': 'Rounding',
+  'bottomRightRadius': 'Rounding',
+  'strokeWeight': 'Line',  // ← ИСПРАВЛЕНО: было 'Size'
+  'width': 'Sizing',
+  'height': 'Sizing'
+};
+
+// Соответствие свойств и scopes
+const PROPERTY_TO_SCOPES = {
+  'paddingLeft': ['ALL_SCOPES', 'GAP'],
+  'paddingRight': ['ALL_SCOPES', 'GAP'],
+  'paddingTop': ['ALL_SCOPES', 'GAP'],
+  'paddingBottom': ['ALL_SCOPES', 'GAP'],
+  'paddingHorizontal': ['ALL_SCOPES', 'GAP'],
+  'paddingVertical': ['ALL_SCOPES', 'GAP'],
+  'itemSpacing': ['ALL_SCOPES', 'GAP'],
+  'cornerRadius': ['ALL_SCOPES', 'CORNER_RADIUS'],
+  'topLeftRadius': ['ALL_SCOPES', 'CORNER_RADIUS'],
+  'topRightRadius': ['ALL_SCOPES', 'CORNER_RADIUS'],
+  'bottomLeftRadius': ['ALL_SCOPES', 'CORNER_RADIUS'],
+  'bottomRightRadius': ['ALL_SCOPES', 'CORNER_RADIUS'],
+  'strokeWeight': ['ALL_SCOPES', 'STROKE_FLOAT'],
+  'width': ['ALL_SCOPES', 'WIDTH_HEIGHT'],
+  'height': ['ALL_SCOPES', 'WIDTH_HEIGHT'],
+  'fills': ['FRAME_FILL', 'SHAPE_FILL', 'TEXT_FILL', 'ALL_SCOPES'],
+  'strokes': ['STROKE_COLOR', 'ALL_SCOPES']
+};
+
+/**
+ * Проверка совместимости scopes
+ */
+function isScopeCompatible(variableScopes, requiredScopes) {
+  // Если requiredScopes пустой или не указан, то любая переменная подходит
+  if (!requiredScopes || requiredScopes.length === 0) {
+    return true;
+  }
+  
+  // Если у переменной нет scopes или ALL_SCOPES, то она универсальная
+  if (!variableScopes || variableScopes.length === 0) {
+    return true;
+  }
+  
+  if (variableScopes.includes('ALL_SCOPES')) {
+    return true;
+  }
+  
+  // Проверяем пересечение scopes
+  return requiredScopes.some(reqScope => variableScopes.includes(reqScope));
+}
+
+/**
+ * Рекурсивный сбор переменных из группы
+ */
+function collectVariablesFromGroup(group, groupName, allVariables, path = '') {
+  for (const key in group) {
+    const item = group[key];
+    
+    if (item.value !== undefined && item.key && item.id) {
+      allVariables.push({
+        name: path ? `${path}/${key}` : key,
+        value: item.value,
+        key: item.key,
+        id: item.id,
+        scopes: item.scopes || [],
+        hiddenFromPublishing: item.hiddenFromPublishing || false
+      });
+    }
+    else if (typeof item === 'object' && item !== null) {
+      const newPath = path ? `${path}/${key}` : key;
+      collectVariablesFromGroup(item, groupName, allVariables, newPath);
+    }
+  }
+}
+
+/**
+ * Извлекает числовые значения из ноды (Token Guard версия)
+ * Проверяет: padding, gap, cornerRadius, strokeWeight
+ */
+function extractNumericValues(node) {
+  const values = [];
+  const boundVariables = node.boundVariables || {};
+  
+  // Проверяем автолейаут (для padding и gap)
+  if (node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE') {
+    if (node.layoutMode !== 'NONE') {
+      // Padding - проверяем с группировкой
+      const paddingLeft = node.paddingLeft;
+      const paddingRight = node.paddingRight;
+      const paddingTop = node.paddingTop;
+      const paddingBottom = node.paddingBottom;
+      
+      const hasLeftVar = !!boundVariables['paddingLeft'];
+      const hasRightVar = !!boundVariables['paddingRight'];
+      const hasTopVar = !!boundVariables['paddingTop'];
+      const hasBottomVar = !!boundVariables['paddingBottom'];
+      
+      // Проверяем горизонтальный padding
+      if (typeof paddingLeft === 'number' && typeof paddingRight === 'number') {
+        if (paddingLeft === paddingRight) {
+          // Одинаковые значения - группируем в один
+          const hasHorizontalVar = hasLeftVar && hasRightVar;
+          values.push({
+            type: 'paddingHorizontal',
+            value: paddingLeft,
+            nodeName: node.name,
+            nodeId: node.id,
+            hasVariable: hasHorizontalVar,
+            valueType: 'numeric'
+          });
+        } else {
+          // Разные значения - показываем раздельно
+          values.push({
+            type: 'paddingLeft',
+            value: paddingLeft,
+            nodeName: node.name,
+            nodeId: node.id,
+            hasVariable: hasLeftVar,
+            valueType: 'numeric'
+          });
+          values.push({
+            type: 'paddingRight',
+            value: paddingRight,
+            nodeName: node.name,
+            nodeId: node.id,
+            hasVariable: hasRightVar,
+            valueType: 'numeric'
+          });
+        }
+      }
+      
+      // Проверяем вертикальный padding
+      if (typeof paddingTop === 'number' && typeof paddingBottom === 'number') {
+        if (paddingTop === paddingBottom) {
+          // Одинаковые значения - группируем в один
+          const hasVerticalVar = hasTopVar && hasBottomVar;
+          
+          console.log(`🔍 Вертикальный padding для "${node.name}":`, {
+            paddingTop,
+            paddingBottom,
+            hasTopVar,
+            hasBottomVar,
+            hasVerticalVar,
+            result: hasVerticalVar ? '✅ С переменной' : '❌ Без переменной'
+          });
+          
+          values.push({
+            type: 'paddingVertical',
+            value: paddingTop,
+            nodeName: node.name,
+            nodeId: node.id,
+            hasVariable: hasVerticalVar,
+            valueType: 'numeric'
+          });
+        } else {
+          // Разные значения - показываем раздельно
+          values.push({
+            type: 'paddingTop',
+            value: paddingTop,
+            nodeName: node.name,
+            nodeId: node.id,
+            hasVariable: hasTopVar,
+            valueType: 'numeric'
+          });
+          values.push({
+            type: 'paddingBottom',
+            value: paddingBottom,
+            nodeName: node.name,
+            nodeId: node.id,
+            hasVariable: hasBottomVar,
+            valueType: 'numeric'
+          });
+        }
+      }
+      
+      // Gap (itemSpacing)
+      if (typeof node.itemSpacing === 'number') {
+        values.push({
+          type: 'itemSpacing',
+          value: node.itemSpacing,
+          nodeName: node.name,
+          nodeId: node.id,
+          hasVariable: !!boundVariables['itemSpacing'],
+          valueType: 'numeric'
+        });
+      }
+    }
+  }
+  
+  // Corner radius
+  if ('cornerRadius' in node) {
+    const corners = ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius'];
+    const isMixedRadius = node.cornerRadius === figma.mixed;
+    const hasIndependentCorners = corners.some(corner => boundVariables[corner] !== undefined);
+    const cornerValues = corners.map(corner => node[corner]).filter(val => typeof val === 'number');
+    const allCornersEqual = cornerValues.length === 4 && cornerValues.every(val => val === cornerValues[0]);
+    
+    // Если углы имеют разные значения ИЛИ есть привязки к индивидуальным углам
+    if (isMixedRadius || hasIndependentCorners || !allCornersEqual) {
+      corners.forEach(corner => {
+        const cornerValue = node[corner];
+        if (typeof cornerValue === 'number') {
+          values.push({
+            type: corner,
+            value: cornerValue,
+            nodeName: node.name,
+            nodeId: node.id,
+            hasVariable: !!boundVariables[corner],
+            valueType: 'numeric'
+          });
+        }
+      });
+    } else if (typeof node.cornerRadius === 'number') {
+      // Все углы одинаковые и используется общий cornerRadius
+      values.push({
+        type: 'cornerRadius',
+        value: node.cornerRadius,
+        nodeName: node.name,
+        nodeId: node.id,
+        hasVariable: !!boundVariables['cornerRadius'],
+        valueType: 'numeric'
+      });
+    }
+  }
+  
+  // Stroke weight
+  if ('strokeWeight' in node && typeof node.strokeWeight === 'number') {
+    const hasVisibleStrokes = node.strokes && node.strokes.length > 0;
+    if (hasVisibleStrokes) {
+      values.push({
+        type: 'strokeWeight',
+        value: node.strokeWeight,
+        nodeName: node.name,
+        nodeId: node.id,
+        hasVariable: !!boundVariables['strokeWeight'],
+        valueType: 'numeric'
+      });
+    }
+  }
+  
+  // Проверяем цвета (fills и strokes)
+  console.log(`🎨 DSV: Проверяем fills для "${node.name}":`, {
+    hasFills: 'fills' in node,
+    fillsLength: node.fills ? node.fills.length : 0
+  });
+  
+  if ('fills' in node && Array.isArray(node.fills)) {
+    node.fills.forEach((fill, index) => {
+      console.log(`   Fill[${index}]:`, {
+        type: fill.type,
+        visible: fill.visible,
+        opacity: fill.opacity,
+        hasColor: !!fill.color
+      });
+      
+      // Проверяем только SOLID цвета с корректными данными
+      if (fill.type === 'SOLID' && fill.visible !== false && fill.opacity > 0 && fill.color) {
+        const hasFillVar = boundVariables.fills && boundVariables.fills[index];
+        
+        if (!hasFillVar) {
+          // Конвертируем цвет в HEX - передаём r, g, b
+          const hexColor = rgbToHex(fill.color.r, fill.color.g, fill.color.b);
+          
+          console.log(`   ✅ Fill[${index}] без переменной, HEX: ${hexColor}`);
+          
+          // Проверяем что hex не null
+          if (hexColor) {
+            values.push({
+              type: 'fills',
+              value: hexColor,
+              opacity: fill.opacity || 1,
+              nodeName: node.name,
+              nodeId: node.id,
+              node: node,
+              hasVariable: false,
+              valueType: 'color',
+              fillIndex: index
+            });
+          }
+        } else {
+          console.log(`   ⏭️ Fill[${index}] уже привязан к переменной`);
+        }
+      }
+    });
+  }
+  
+  console.log(`🖌️ DSV: Проверяем strokes для "${node.name}":`, {
+    hasStrokes: 'strokes' in node,
+    strokesLength: node.strokes ? node.strokes.length : 0
+  });
+  
+  if ('strokes' in node && Array.isArray(node.strokes)) {
+    node.strokes.forEach((stroke, index) => {
+      console.log(`   Stroke[${index}]:`, {
+        type: stroke.type,
+        visible: stroke.visible,
+        opacity: stroke.opacity,
+        hasColor: !!stroke.color
+      });
+      
+      // Проверяем только SOLID обводки с корректными данными
+      if (stroke.type === 'SOLID' && stroke.visible !== false && stroke.opacity > 0 && stroke.color) {
+        const hasStrokeVar = boundVariables.strokes && boundVariables.strokes[index];
+        
+        if (!hasStrokeVar) {
+          // Конвертируем цвет в HEX - передаём r, g, b
+          const hexColor = rgbToHex(stroke.color.r, stroke.color.g, stroke.color.b);
+          
+          console.log(`   ✅ Stroke[${index}] без переменной, HEX: ${hexColor}`);
+          
+          // Проверяем что hex не null
+          if (hexColor) {
+            values.push({
+              type: 'strokes',
+              value: hexColor,
+              opacity: stroke.opacity || 1,
+              nodeName: node.name,
+              nodeId: node.id,
+              node: node,
+              hasVariable: false,
+              valueType: 'color',
+              strokeIndex: index
+            });
+          }
+        } else {
+          console.log(`   ⏭️ Stroke[${index}] уже привязан к переменной`);
+        }
+      }
+    });
+  }
+  
+  return values;
+}
+
+/**
+ * Рекурсивный обход дерева нод
+ */
+function traverseNode(node, callback, skipSelf = false) {
+  // Если skipSelf === true, пропускаем сам узел, но проверяем детей
+  if (!skipSelf) {
+    callback(node);
+  }
+  
+  if ('children' in node) {
+    for (const child of node.children) {
+      traverseNode(child, callback, false);
+    }
+  }
+}
+
+/**
+ * Проверка числовых переменных (Token Guard версия)
+ * Возвращает массив ошибок в упрощенном формате
+ */
+async function checkNumericVariables() {
+  try {
+    console.log('🔍 DSV: Начинаем проверку числовых переменных (Token Guard версия)...');
+    
+    const selection = figma.currentPage.selection;
+    
+    if (selection.length === 0) {
+      throw new Error('Выберите хотя бы один элемент для проверки!');
+    }
+    
+    console.log(`✓ Выбрано ${selection.length} элементов`);
+    
+    // Загружаем сохранённые токены
+    const savedTokens = await figma.clientStorage.getAsync('dsv-tokens');
+    
+    let nodesChecked = 0;
+    const errors = [];
+    
+    // Обходим каждый выбранный узел
+    for (const selectedNode of selection) {
+      // Для COMPONENT_SET пропускаем сам узел, но проверяем детей
+      if (selectedNode.type === 'COMPONENT_SET') {
+        console.log(`⏭️ DSV: Пропускаем сам COMPONENT_SET "${selectedNode.name}", но проверяем содержимое`);
+        traverseNode(selectedNode, (node) => {
+          nodesChecked++;
+          
+          try {
+            const values = extractNumericValues(node);
+            
+            // Проверяем каждое значение
+            for (const item of values) {
+              if (!item.hasVariable) {
+                // Нет привязки к переменной - ищем подходящий токен
+                let suggestedToken = null;
+                
+                if (savedTokens && savedTokens.variables) {
+                  if (item.valueType === 'numeric') {
+                    // Для числовых значений
+                    suggestedToken = findClosestVariable(item.value, item.type, savedTokens.variables);
+                  } else if (item.valueType === 'color') {
+                    // Для цветов - используем findColorVariable с opacity и node
+                    suggestedToken = findColorVariable(item.value, item.opacity || 1, item.type, savedTokens.variables, item.node);
+                  }
+                }
+                
+                // Создаём ошибку в новом формате
+                errors.push({
+                  nodeId: item.nodeId,
+                  nodeName: item.nodeName,
+                  property: PROPERTY_LABELS[item.type] || item.type,
+                  propertyType: item.type, // Для исправления!
+                  valueType: item.valueType,
+                  value: item.value,
+                  fillIndex: item.fillIndex,
+                  strokeIndex: item.strokeIndex,
+                  suggestedToken: suggestedToken ? {
+                    id: suggestedToken.id,
+                    key: suggestedToken.key,
+                    name: suggestedToken.name,
+                    value: suggestedToken.value || suggestedToken.Light // Для цветов берём значение из режима
+                  } : null
+                });
+                
+                console.log(`❌ ${item.nodeName}: ${item.type} = ${item.value} (без переменной)`);
+              } else {
+                console.log(`✅ ${item.nodeName}: ${item.type} = ${item.value} (с переменной)`);
+              }
+            }
+          } catch (error) {
+            console.error(`❌ DSV: Ошибка при проверке ноды:`, error);
+          }
+        }, true); // skipSelf = true для COMPONENT_SET
+        continue;
+      }
+      
+      traverseNode(selectedNode, (node) => {
+        nodesChecked++;
+        
+        try {
+          const values = extractNumericValues(node);
+          
+          // Проверяем каждое значение
+          for (const item of values) {
+            if (!item.hasVariable) {
+              // Нет привязки к переменной - ищем подходящий токен
+              let suggestedToken = null;
+              
+              if (savedTokens && savedTokens.variables) {
+                if (item.valueType === 'numeric') {
+                  // Для числовых значений
+                  suggestedToken = findClosestVariable(item.value, item.type, savedTokens.variables);
+                } else if (item.valueType === 'color') {
+                  // Для цветов - используем findColorVariable с opacity и node
+                  suggestedToken = findColorVariable(item.value, item.opacity || 1, item.type, savedTokens.variables, item.node);
+                }
+              }
+              
+              // Создаём ошибку в новом формате
+              errors.push({
+                nodeId: item.nodeId,
+                nodeName: item.nodeName,
+                property: PROPERTY_LABELS[item.type] || item.type,
+                propertyType: item.type, // Для исправления!
+                valueType: item.valueType,
+                value: item.value,
+                fillIndex: item.fillIndex,
+                strokeIndex: item.strokeIndex,
+                suggestedToken: suggestedToken ? {
+                  id: suggestedToken.id,
+                  key: suggestedToken.key,
+                  name: suggestedToken.name,
+                  value: suggestedToken.value || suggestedToken.Light // Для цветов берём значение из режима
+                } : null
+              });
+              
+              console.log(`❌ ${item.nodeName}: ${item.type} = ${item.value} (без переменной)`);
+            } else {
+              console.log(`✅ ${item.nodeName}: ${item.type} = ${item.value} (с переменной)`);
+            }
+          }
+        } catch (error) {
+          console.error(`⚠️ Ошибка при проверке узла ${node.name}:`, error.message);
+        }
+      });
+    }
+    
+    console.log(`✓ Проверка завершена: ${nodesChecked} элементов, ${errors.length} ошибок`);
+    
+    return {
+      checked: nodesChecked,
+      errors: errors
+    };
+    
+  } catch (error) {
+    console.error('❌ DSV: Ошибка проверки:', error);
+    throw error;
+  }
+}
+
+/**
+ * Универсальная функция исправления ошибки (числовые + цвета)
+ */
+async function fixDSVError(error) {
+  try {
+    const propertyType = error.propertyType || error.property;
+    console.log(`🔧 DSV: Исправляем: ${error.nodeName} → ${propertyType} = ${error.value}`);
+    console.log(`   Тип значения: ${error.valueType}`);
+    
+    // Загружаем сохранённые токены
+    const savedTokens = await figma.clientStorage.getAsync('dsv-tokens');
+    
+    if (!savedTokens || !savedTokens.variables) {
+      console.error('❌ DSV: Токены не найдены в clientStorage');
+      return { success: false, message: 'Сначала импортируйте токены!' };
+    }
+    
+    console.log(`✓ DSV: Токены загружены, коллекций: ${Object.keys(savedTokens.variables).length}`);
+    
+    // Находим узел
+    const node = await figma.getNodeByIdAsync(error.nodeId);
+    if (!node) {
+      console.error('❌ DSV: Узел не найден');
+      return { success: false, message: 'Узел не найден' };
+    }
+    
+    console.log(`✓ DSV: Узел найден: ${node.name}`);
+    
+    // Ищем переменную в зависимости от типа
+    let variableData = null;
+    
+    if (error.valueType === 'numeric') {
+      // Для числовых значений
+      console.log(`🔍 DSV: Ищем числовой токен через findClosestVariable`);
+      variableData = findClosestVariable(error.value, propertyType, savedTokens.variables);
+    } else if (error.valueType === 'color') {
+      // Для цветов
+      console.log(`🔍 DSV: Ищем цветовой токен через findColorVariable`);
+      variableData = findColorVariable(error.value, error.opacity || 1, propertyType, savedTokens.variables, node);
+    }
+    
+    if (!variableData) {
+      console.error('❌ DSV: Переменная не найдена через поиск');
+      return { success: false, message: `Не найдена переменная для ${propertyType}` };
+    }
+    
+    console.log(`✓ DSV: Найдена переменная:`, {
+      name: variableData.name,
+      value: variableData.value,
+      key: variableData.key,
+      id: variableData.id
+    });
+    
+    // Получаем переменную (локально или импортируем)
+    console.log(`🔍 DSV: Пытаемся получить переменную через getOrImportVariable`);
+    const variable = await getOrImportVariable(variableData);
+    
+    if (!variable) {
+      console.error('❌ DSV: Не удалось получить переменную через getOrImportVariable');
+      return { success: false, message: 'Не удалось получить переменную' };
+    }
+    
+    console.log(`✓ DSV: Переменная получена: ${variable.name}`);
+    
+    // Применяем переменную к узлу
+    console.log(`🔧 DSV: Применяем переменную к свойству ${propertyType}`);
+    
+    if (propertyType === 'paddingHorizontal') {
+      node.setBoundVariable('paddingLeft', variable);
+      node.setBoundVariable('paddingRight', variable);
+      console.log(`✓ DSV: Применён paddingHorizontal (left + right)`);
+    } else if (propertyType === 'paddingVertical') {
+      node.setBoundVariable('paddingTop', variable);
+      node.setBoundVariable('paddingBottom', variable);
+      console.log(`✓ DSV: Применён paddingVertical (top + bottom)`);
+    } else if (propertyType === 'fills' && error.fillIndex !== undefined) {
+      // Для fills используем setBoundVariableForPaint (Token Guard метод)
+      const fills = JSON.parse(JSON.stringify(node.fills)); // Клонируем fills
+      if (fills[error.fillIndex] && fills[error.fillIndex].type === 'SOLID') {
+        fills[error.fillIndex] = figma.variables.setBoundVariableForPaint(
+          fills[error.fillIndex],
+          'color',
+          variable
+        );
+        node.fills = fills;
+        console.log(`✓ DSV: Применён fill[${error.fillIndex}]`);
+      }
+    } else if (propertyType === 'strokes' && error.strokeIndex !== undefined) {
+      // Для strokes используем setBoundVariableForPaint (Token Guard метод)
+      const strokes = JSON.parse(JSON.stringify(node.strokes)); // Клонируем strokes
+      if (strokes[error.strokeIndex] && strokes[error.strokeIndex].type === 'SOLID') {
+        strokes[error.strokeIndex] = figma.variables.setBoundVariableForPaint(
+          strokes[error.strokeIndex],
+          'color',
+          variable
+        );
+        node.strokes = strokes;
+        console.log(`✓ DSV: Применён stroke[${error.strokeIndex}]`);
+      }
+    } else {
+      node.setBoundVariable(propertyType, variable);
+      console.log(`✓ DSV: Применён ${propertyType}`);
+    }
+    
+    console.log(`✅ DSV: Исправлено: ${error.nodeName} → ${propertyType}`);
+    
+    return { success: true, nodeName: error.nodeName, propertyType: propertyType };
+    
+  } catch (error) {
+    console.error('❌ DSV: Ошибка исправления:', error);
+    console.error('   Stack:', error.stack);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Массовое исправление ошибок DSV
+ */
+async function fixAllDSVErrors(errors) {
+  console.log(`🔧 DSV: Массовое исправление: ${errors.length} ошибок`);
+  console.log(`🔍 DSV: Структура первой ошибки:`, errors[0]);
+  
+  let fixedCount = 0;
+  let failedCount = 0;
+  
+  for (const error of errors) {
+    console.log(`\n🔄 DSV: Обрабатываем ошибку:`, {
+      nodeName: error.nodeName,
+      property: error.property,
+      propertyType: error.propertyType,
+      value: error.value,
+      valueType: error.valueType
+    });
+    
+    try {
+      const result = await fixDSVError(error);
+      console.log(`🔍 DSV: Результат fixDSVError:`, result);
+      
+      if (result && result.success) {
+        fixedCount++;
+      } else {
+        failedCount++;
+      }
+    } catch (err) {
+      console.error(`❌ DSV: Ошибка при исправлении ${error.nodeName}:`, err);
+      console.error(`   Stack:`, err.stack);
+      failedCount++;
+    }
+  }
+  
+  console.log(`✅ DSV: Исправление завершено: ${fixedCount} успешно, ${failedCount} ошибок`);
+  
+  return { fixedCount, failedCount };
+}
+
+// Лейблы для UI (из Token Guard)
+const PROPERTY_LABELS = {
+  'paddingLeft': 'Padding Left',
+  'paddingRight': 'Padding Right',
+  'paddingTop': 'Padding Top',
+  'paddingBottom': 'Padding Bottom',
+  'paddingHorizontal': 'Padding Horizontal',
+  'paddingVertical': 'Padding Vertical',
+  'itemSpacing': 'Gap',
+  'cornerRadius': 'Corner Radius',
+  'topLeftRadius': 'Corner Top Left',
+  'topRightRadius': 'Corner Top Right',
+  'bottomLeftRadius': 'Corner Bottom Left',
+  'bottomRightRadius': 'Corner Bottom Right',
+  'strokeWeight': 'Stroke Weight',
+  'fills': 'Fill',
+  'strokes': 'Stroke'
+};
+
+/**
+ * Поиск ближайшей переменной для числового значения
+ */
+function findClosestVariable(currentValue, propertyType, savedVariables) {
+  // DEBUG: Проверяем что получаем
+  console.log(`🔍 DEBUG findClosestVariable вызвана:`, {
+    value: currentValue,
+    propertyType: propertyType,
+    hasSavedVariables: !!savedVariables,
+    collections: savedVariables ? Object.keys(savedVariables) : []
+  });
+  
+  console.log(`🔍 DSV: Ищем токен для ${propertyType} = ${currentValue}`);
+  
+  const targetGroup = PROPERTY_TO_GROUP[propertyType];
+  if (!targetGroup) {
+    console.error('❌ DSV: Неизвестное свойство:', propertyType);
+    return null;
+  }
+  
+  // DEBUG: Показываем все доступные группы
+  console.log(`🔍 Ищем группу "${targetGroup}", доступные группы в коллекциях:`);
+  for (const collectionName in savedVariables) {
+    const collection = savedVariables[collectionName];
+    const groups = Object.keys(collection);
+    console.log(`   "${collectionName}": [${groups.join(', ')}]`);
+  }
+  
+  const requiredScopes = PROPERTY_TO_SCOPES[propertyType] || [];
+  const allVariables = [];
+  
+  for (const collectionName in savedVariables) {
+    const collection = savedVariables[collectionName];
+    
+    if (collection[targetGroup]) {
+      collectVariablesFromGroup(collection[targetGroup], targetGroup, allVariables);
+    }
+  }
+  
+  console.log(`✓ Найдено ${allVariables.length} переменных в группе ${targetGroup}`);
+  
+  if (allVariables.length === 0) {
+    return null;
+  }
+  
+  const compatibleVariables = allVariables.filter(v => {
+    return isScopeCompatible(v.scopes, requiredScopes);
+  });
+  
+  console.log(`✓ После фильтрации по scopes: ${compatibleVariables.length} совместимых переменных`);
+  
+  if (compatibleVariables.length === 0) {
+    return null;
+  }
+  
+  const exactMatch = compatibleVariables.find(v => v.value === currentValue);
+  if (exactMatch) {
+    console.log(`✅ DSV: Найдено точное совпадение: ${exactMatch.name} = ${exactMatch.value}`);
+    return exactMatch;
+  }
+  
+  const largerValues = compatibleVariables
+    .filter(v => v.value > currentValue)
+    .sort((a, b) => a.value - b.value);
+  
+  if (largerValues.length > 0) {
+    console.log(`✅ DSV: Найдено ближайшее большее: ${largerValues[0].name} = ${largerValues[0].value}`);
+    return largerValues[0];
+  }
+  
+  const smallerValues = compatibleVariables
+    .filter(v => v.value < currentValue)
+    .sort((a, b) => b.value - a.value);
+  
+  if (smallerValues.length > 0) {
+    console.log(`✅ DSV: Найдено ближайшее меньшее: ${smallerValues[0].name} = ${smallerValues[0].value}`);
+    return smallerValues[0];
+  }
+  
+  return null;
+}
+
+/**
+ * Получение или импорт переменной по данным
+ */
+async function getOrImportVariable(variableData) {
+  console.log(`\n🔍 DSV: getOrImportVariable - получаем переменную`);
+  console.log(`   Name: ${variableData.name || 'неизвестно'}`);
+  console.log(`   ID: ${variableData.id || 'нет'}`);
+  console.log(`   Key: ${variableData.key || 'нет'}`);
+  
+  // Попытка 1: Поиск по ID (если есть)
+  if (variableData.id) {
+    console.log(`   🔎 Попытка 1: Ищем локально по ID...`);
+    try {
+      const localVariable = await figma.variables.getVariableByIdAsync(variableData.id);
+      if (localVariable) {
+        console.log(`   ✅ Найдена локальная переменная по ID: ${localVariable.name}`);
+        return localVariable;
+      } else {
+        console.warn(`   ⚠️ getVariableByIdAsync вернул null для ID: ${variableData.id}`);
+      }
+    } catch (error) {
+      console.warn(`   ❌ Ошибка при получении по ID:`, error.message);
+    }
+  }
+  
+  // Попытка 2: Поиск по key среди локальных переменных
+  if (variableData.key) {
+    console.log(`   🔎 Попытка 2: Ищем локально по key среди всех локальных переменных...`);
+    try {
+      const localVariables = await figma.variables.getLocalVariablesAsync();
+      console.log(`      Всего локальных переменных: ${localVariables.length}`);
+      
+      const foundLocal = localVariables.find(v => v.key === variableData.key);
+      if (foundLocal) {
+        console.log(`   ✅ Найдена локальная переменная по key: ${foundLocal.name} (id: ${foundLocal.id})`);
+        return foundLocal;
+      } else {
+        console.warn(`   ⚠️ Переменная с key "${variableData.key}" не найдена среди локальных`);
+      }
+    } catch (error) {
+      console.warn(`   ❌ Ошибка при поиске среди локальных:`, error.message);
+    }
+  }
+  
+  // Попытка 3: Импорт по key
+  if (variableData.key) {
+    console.log(`   🔎 Попытка 3: Импортируем по key из библиотеки...`);
+    try {
+      const importedVariable = await figma.variables.importVariableByKeyAsync(variableData.key);
+      if (importedVariable) {
+        console.log(`   ✅ Импортирована переменная из библиотеки: ${importedVariable.name}`);
+        return importedVariable;
+      } else {
+        console.warn(`   ⚠️ importVariableByKeyAsync вернул null для key: ${variableData.key}`);
+      }
+    } catch (error) {
+      console.warn(`   ❌ Ошибка импорта по key:`, error.message);
+    }
+  }
+  
+  console.error(`❌ DSV: Не удалось получить переменную ни одним способом`);
+  console.error(`   ID: ${variableData.id || 'отсутствует'}`);
+  console.error(`   Key: ${variableData.key || 'отсутствует'}`);
+  console.error(`   Name: ${variableData.name || 'отсутствует'}`);
+  
+  return null;
+}
+
+/**
+ * Применение токена к свойству ноды
+ */
+async function applyTokenToProperty(node, propertyType, variableData) {
+  try {
+    const variable = await getOrImportVariable(variableData);
+    
+    if (!variable) {
+      throw new Error('Не удалось получить переменную');
+    }
+    
+    node.setBoundVariable(propertyType, variable);
+    
+    console.log(`✅ DSV: Применён токен "${variableData.name}" к свойству "${propertyType}"`);
+    return true;
+    
+  } catch (error) {
+    console.error(`❌ DSV: Ошибка применения токена:`, error);
+    return false;
+  }
+}
+
+/**
+ * Валидация ноды на использование токенов
+ */
+function validateNode(node, mode, savedTokens) {
+  const issues = [];
+  const boundVariables = node.boundVariables || {};
+  
+  // Проверяем fills
+  if ('fills' in node && Array.isArray(node.fills)) {
+    node.fills.forEach((fill, index) => {
+      if (fill.type === 'SOLID' && fill.visible !== false) {
+        const binding = boundVariables.fills && boundVariables.fills[index];
+        
+        if (!binding) {
+          const hexColor = rgbToHex(fill.color.r, fill.color.g, fill.color.b);
+          
+          issues.push({
+            type: 'No Variable',
+            severity: 'medium',
+            property: 'Fill',
+            description: `Цвет заливки ${hexColor} не использует токен`,
+            nodeId: node.id,
+            nodeName: node.name,
+            value: hexColor,
+            suggestedToken: savedTokens ? findColorVariable(hexColor, 'Light', savedTokens) : null
+          });
+        }
+      }
+    });
+  }
+  
+  // Проверяем strokes
+  if ('strokes' in node && Array.isArray(node.strokes)) {
+    node.strokes.forEach((stroke, index) => {
+      if (stroke.type === 'SOLID' && stroke.visible !== false) {
+        const binding = boundVariables.strokes && boundVariables.strokes[index];
+        
+        if (!binding) {
+          const hexColor = rgbToHex(stroke.color.r, stroke.color.g, stroke.color.b);
+          
+          issues.push({
+            type: 'No Variable',
+            severity: 'medium',
+            property: 'Stroke',
+            description: `Цвет обводки ${hexColor} не использует токен`,
+            nodeId: node.id,
+            nodeName: node.name,
+            value: hexColor,
+            suggestedToken: savedTokens ? findColorVariable(hexColor, 'Light', savedTokens) : null
+          });
+        }
+      }
+    });
+  }
+  
+  // Проверяем corner radius
+  if ('cornerRadius' in node && typeof node.cornerRadius === 'number' && node.cornerRadius > 0) {
+    const binding = boundVariables.cornerRadius;
+    
+    if (!binding) {
+      issues.push({
+        type: 'No Variable',
+        severity: 'medium',
+        property: 'Corner Radius',
+        description: `Corner Radius ${node.cornerRadius} не использует токен`,
+        nodeId: node.id,
+        nodeName: node.name,
+        value: node.cornerRadius,
+        suggestedToken: savedTokens ? findClosestVariable(node.cornerRadius, 'cornerRadius', savedTokens) : null
+      });
+    }
+  }
+  
+  // Проверяем paddings для auto-layout
+  if (node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE') {
+    if (node.layoutMode !== 'NONE') {
+      if (node.paddingLeft > 0 && !boundVariables.paddingLeft) {
+        issues.push({
+          type: 'No Variable',
+          severity: 'medium',
+          property: 'Padding Left',
+          description: `Padding Left ${node.paddingLeft} не использует токен`,
+          nodeId: node.id,
+          nodeName: node.name,
+          value: node.paddingLeft,
+          suggestedToken: savedTokens ? findClosestVariable(node.paddingLeft, 'paddingLeft', savedTokens) : null
+        });
+      }
+      
+      if (node.paddingRight > 0 && !boundVariables.paddingRight) {
+        issues.push({
+          type: 'No Variable',
+          severity: 'medium',
+          property: 'Padding Right',
+          description: `Padding Right ${node.paddingRight} не использует токен`,
+          nodeId: node.id,
+          nodeName: node.name,
+          value: node.paddingRight,
+          suggestedToken: savedTokens ? findClosestVariable(node.paddingRight, 'paddingRight', savedTokens) : null
+        });
+      }
+      
+      if (node.paddingTop > 0 && !boundVariables.paddingTop) {
+        issues.push({
+          type: 'No Variable',
+          severity: 'medium',
+          property: 'Padding Top',
+          description: `Padding Top ${node.paddingTop} не использует токен`,
+          nodeId: node.id,
+          nodeName: node.name,
+          value: node.paddingTop,
+          suggestedToken: savedTokens ? findClosestVariable(node.paddingTop, 'paddingTop', savedTokens) : null
+        });
+      }
+      
+      if (node.paddingBottom > 0 && !boundVariables.paddingBottom) {
+        issues.push({
+          type: 'No Variable',
+          severity: 'medium',
+          property: 'Padding Bottom',
+          description: `Padding Bottom ${node.paddingBottom} не использует токен`,
+          nodeId: node.id,
+          nodeName: node.name,
+          value: node.paddingBottom,
+          suggestedToken: savedTokens ? findClosestVariable(node.paddingBottom, 'paddingBottom', savedTokens) : null
+        });
+      }
+      
+      if (node.itemSpacing > 0 && !boundVariables.itemSpacing) {
+        issues.push({
+          type: 'No Variable',
+          severity: 'medium',
+          property: 'Gap',
+          description: `Gap ${node.itemSpacing} не использует токен`,
+          nodeId: node.id,
+          nodeName: node.name,
+          value: node.itemSpacing,
+          suggestedToken: savedTokens ? findClosestVariable(node.itemSpacing, 'itemSpacing', savedTokens) : null
+        });
+      }
+    }
+  }
+  
+  return issues;
+}
+
+/**
+ * Рекурсивный сбор цветовых переменных
+ */
+function collectColorVariablesFromGroup(group, allVariables, path = '', collectionName = '') {
+  for (const key in group) {
+    const item = group[key];
+    
+    // Пропускаем если это не объект
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+    
+    // Проверяем, это переменная или подгруппа
+    const hasKey = 'key' in item;
+    
+    // Если есть key - это может быть переменная (цветовая или числовая)
+    if (hasKey) {
+      // Проверяем, есть ли цветовые значения (начинаются с # или содержат #)
+      const colorKeys = Object.keys(item).filter(k => {
+        const val = item[k];
+        return k !== 'key' && k !== 'id' && k !== 'scopes' && k !== 'value' && k !== 'hiddenFromPublishing' && k !== 'description' 
+               && typeof val === 'string' && (val.startsWith('#') || val.includes('#'));
+      });
+      
+      if (colorKeys.length > 0) {
+        // Это цветовая переменная!
+        const variable = {
+        name: path ? `${path}/${key}` : key,
+        key: item.key,
+        id: item.id,
+        scopes: item.scopes || [],
+          modes: item, // Все режимы (Light, Dark и т.д.) - включая метаданные
+          collectionName: collectionName,
+          hiddenFromPublishing: item.hiddenFromPublishing || false,
+          description: item.description || ''
+        };
+        allVariables.push(variable);
+        
+        if (allVariables.length <= 3) {
+          console.log(`✅ Добавлена цветовая переменная #${allVariables.length}: ${variable.name}`);
+        }
+      }
+      // Если есть key но нет цветов - это числовая переменная, пропускаем
+    } else {
+      // Нет key - это подгруппа, рекурсивно обходим
+      const newPath = path ? `${path}/${key}` : key;
+      collectColorVariablesFromGroup(item, allVariables, newPath, collectionName);
+    }
+  }
+}
+
+// ============================================================================
+// Token Guard: Вспомогательные функции для поиска цветовых переменных
+// ============================================================================
+
+// Функция для извлечения hex и прозрачности из строки формата "#ff7f4d (13%)"
+function parseColorString(colorString) {
+  if (!colorString || typeof colorString !== 'string') {
+    return { hex: null, opacity: 1 };
+  }
+  
+  const parts = colorString.trim().split(' ');
+  const hex = parts[0].toLowerCase();
+  
+  // Проверяем наличие прозрачности в формате (XX%)
+  let opacity = 1;
+  if (parts.length > 1) {
+    const opacityMatch = parts[1].match(/\((\d+)%\)/);
+    if (opacityMatch) {
+      opacity = parseInt(opacityMatch[1]) / 100;
+    }
+  }
+  
+  return { hex, opacity };
+}
+
+// Функция для сравнения прозрачности с небольшой погрешностью (±1%)
+function opacitiesMatch(opacity1, opacity2) {
+  const opacityDiff = Math.abs(opacity1 - opacity2);
+  return opacityDiff < 0.01;
+}
+
+// Функция для сравнения цветов с учетом прозрачности
+function colorsMatch(hex1, opacity1, hex2, opacity2) {
+  // Сравниваем hex
+  if (hex1.toLowerCase() !== hex2.toLowerCase()) {
+    return false;
+  }
+  
+  // Сравниваем прозрачность с небольшой погрешностью (±1%)
+  return opacitiesMatch(opacity1, opacity2);
+}
+
+// Функция для определения приоритета коллекции
+function getCollectionPriority(collectionName) {
+  // Приоритет 1 (высший): Конкретные продукты (2.1, 2.2, 2.3 и т.д.)
+  if (/^2\.\d+/.test(collectionName)) {
+    return 1;
+  }
+  
+  // Приоритет 2: Семейство продуктов (2. Product)
+  if (collectionName.startsWith('2.') || collectionName.startsWith('2 ')) {
+    return 2;
+  }
+  
+  // Приоритет 3 (низший): Базовая тема (1. Theme)
+  if (collectionName.startsWith('1.') || collectionName.startsWith('1 ')) {
+    return 3;
+  }
+  
+  // Приоритет 4: Неизвестные коллекции (последние)
+  return 4;
+}
+
+// Определяет, в какой коллекции 2.X искать переменную в зависимости от режима
+function getCollectionNumberForMode(modeName) {
+  // 2.1 Mail, Calendar, Disk, YangoPhoto
+  const collection21Modes = ['Mail', 'Calendar', 'Disk', 'Yango'];
+  if (collection21Modes.includes(modeName)) {
+    return '2.1';
+  }
+  
+  // 2.2 Messenger, Telemost, GPT
+  const collection22Modes = ['Messenger', 'Telemost', 'GPT'];
+  if (collection22Modes.includes(modeName)) {
+    return '2.2';
+  }
+  
+  // 2.3 Docs, Tables, Pres, Concept
+  const collection23Modes = ['Docs', 'Tables', 'Pres', 'Concept'];
+  if (collection23Modes.includes(modeName)) {
+    return '2.3';
+  }
+  
+  // 2.4 Magic, Admin, Core
+  const collection24Modes = ['Admin', 'Magic', 'Core'];
+  if (collection24Modes.includes(modeName)) {
+    return '2.4';
+  }
+  
+  // 2.5 Wiki, Tracker, Forms
+  const collection25Modes = ['Wiki', 'Tracker', 'Forms'];
+  if (collection25Modes.includes(modeName)) {
+    return '2.5';
+  }
+  
+  // Неизвестный режим
+  return null;
+}
+
+// Вспомогательная функция для поиска первого режима в группе переменных
+function findFirstModeInGroup(group) {
+  for (const key in group) {
+    const item = group[key];
+    
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+    
+    // Если это переменная с режимами
+    if (item.key) {
+      // Ищем первый режим (не служебное поле)
+      for (const modeKey in item) {
+        if (modeKey !== 'key' && modeKey !== 'id' && modeKey !== 'scopes' && 
+            modeKey !== 'hiddenFromPublishing' && modeKey !== 'description' &&
+            typeof item[modeKey] === 'string') {
+          return modeKey;
+        }
+      }
+    } else {
+      // Это подгруппа - рекурсивно ищем
+      const foundMode = findFirstModeInGroup(item);
+      if (foundMode) {
+        return foundMode;
+      }
+    }
+  }
+  return null;
+}
+
+// Функция для получения режима конкретной коллекции для узла
+function getModeForCollection(node, collectionName, savedVariables) {
+  let currentNode = node;
+  
+  // Получаем все локальные коллекции
+  const localCollections = figma.variables.getLocalVariableCollections();
+  
+  // Сначала пытаемся найти коллекцию по имени в localCollections
+  const targetCollection = localCollections.find(c => c.name === collectionName);
+  
+  // Если нашли локальную коллекцию
+  if (targetCollection) {
+    // Идём вверх по иерархии до страницы
+    while (currentNode) {
+      const resolvedModes = currentNode.resolvedVariableModes || {};
+      const explicitModes = currentNode.explicitVariableModes || {};
+      
+      // Проверяем, есть ли режим для этой коллекции на текущем узле
+      const modeId = resolvedModes[targetCollection.id] || explicitModes[targetCollection.id];
+      
+      if (modeId) {
+        // Нашли режим! Определяем его название
+        const mode = targetCollection.modes.find(m => m.modeId === modeId);
+        
+        if (mode) {
+          return mode.name;
+        }
+      }
+      
+      // Переходим к родителю
+      if (currentNode.parent && currentNode.parent.type !== 'PAGE') {
+        currentNode = currentNode.parent;
+      } else {
+        break;
+      }
+    }
+    
+    // Не нашли режим - возвращаем первый режим из коллекции
+    if (targetCollection.modes.length > 0) {
+      return targetCollection.modes[0].name;
+    }
+    
+    return null;
+  }
+  
+  // Коллекция не найдена локально - используем savedVariables
+  if (savedVariables[collectionName]) {
+    const collection = savedVariables[collectionName];
+    if (collection['Colors']) {
+      const firstMode = findFirstModeInGroup(collection['Colors']);
+      if (firstMode) {
+        return firstMode;
+      }
+    }
+  }
+  
+  return null;
+}
+
+// Функция для получения режима коллекции 1.Theme для узла
+function getThemeModeForNode(node, savedVariables) {
+  // Находим название коллекции 1.Theme
+  const themeCollectionName = Object.keys(savedVariables).find(name => 
+    name.startsWith('1.') || name.startsWith('1 ')
+  );
+  
+  if (!themeCollectionName) {
+    return 'Light';
+  }
+  
+  const mode = getModeForCollection(node, themeCollectionName, savedVariables);
+  
+  // Если не нашли режим для 1.Theme, возвращаем Light по умолчанию
+  if (!mode) {
+    return 'Light';
+  }
+  
+  return mode;
+}
+
+// Функция для проверки, можно ли применить переменную к узлу
+function canApplyColorVariableToNode(variableName, node) {
+  // УПРОЩЁННАЯ ВЕРСИЯ: Разрешаем все переменные
+  // В Token Guard есть сложные правила (text- не к фреймам, line- не к тексту),
+  // но для упрощённой версии DSV они слишком строгие
+  return true;
+  
+  /* ОРИГИНАЛЬНАЯ ЛОГИКА Token Guard (отключена):
+  // Определяем тип узла
+  const nodeType = node.type;
+  
+  // Извлекаем группу из имени переменной
+  const pathParts = variableName.split('/');
+  if (pathParts.length < 2) {
+    return true;
+  }
+  
+  // Берем последнюю часть пути (имя переменной)
+  const varName = pathParts[pathParts.length - 1];
+  
+  // Определяем группу
+  let groupName;
+  
+  if (pathParts[1] && pathParts[1].startsWith('orb-')) {
+    // Формат 1.Theme: Colors/orb-text/primary
+    groupName = pathParts[1];
+  } else {
+    // Формат 2.X: Colors/Color/light/line-focus
+    const nameParts = varName.split('-');
+    if (nameParts.length > 0) {
+      groupName = nameParts[0];
+    } else {
+      groupName = varName;
+    }
+  }
+  
+  if (!groupName) {
+    return true;
+  }
+  
+  // ПРАВИЛО 1: Переменные из групп с "text" нельзя применять к FRAME и shapes
+  // ИСКЛЮЧЕНИЕ: Если имя объекта начинается с "orb-icon-"
+  if (groupName.toLowerCase().includes('text')) {
+    if (node.name.toLowerCase().startsWith('orb-icon-')) {
+      return true;
+    }
+    
+    const forbiddenTypes = ['FRAME', 'COMPONENT', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 'POLYGON', 'STAR', 'LINE', 'VECTOR'];
+    
+    if (forbiddenTypes.includes(nodeType)) {
+      return false;
+    }
+  }
+  
+  // ПРАВИЛО 2: Переменные из групп с "line" нельзя применять к TEXT
+  if (groupName.toLowerCase().includes('line')) {
+    if (nodeType === 'TEXT') {
+      return false;
+    }
+  }
+  
+  // Все проверки пройдены
+  return true;
+  */
+}
+
+/**
+ * Поиск подходящей цветовой переменной (Token Guard версия - ПОЛНАЯ)
+ */
+// Функция для поиска цветовой переменной по hex значению и прозрачности
+function findColorVariable(hexColor, opacity, propertyType, savedVariables, node) {
+  console.log(`🎨 Ищем цветовую переменную для ${propertyType}: ${hexColor} (opacity: ${Math.round(opacity * 100)}%)`);
+  
+  // Объявляем переменную для хранения имени коллекции 1.Theme
+  let themeCollectionName;
+  
+  // Объявляем переменную для режима 2.X (будет определена в ШАГ 1)
+  let mode2X = null;
+  let targetCollectionName = null;
+  let targetCollectionNumber = null;
+  
+  // Получаем требуемые scopes для этого свойства
+  const requiredScopes = PROPERTY_TO_SCOPES[propertyType] || [];
+  console.log(`✓ Требуемые scopes: [${requiredScopes.join(', ')}]`);
+  
+  // Получаем режим 1.Theme для узла
+  const themeMode = getThemeModeForNode(node, savedVariables);
+  console.log(`✓ Режим 1.Theme для объекта: ${themeMode}`);
+  
+  // Собираем все цветовые переменные из всех коллекций
+  const allColorVariables = [];
+  
+  for (const collectionName in savedVariables) {
+    const collection = savedVariables[collectionName];
+    
+    // Ищем группу Colors в коллекции (или любую другую группу с цветами)
+    if (collection['Colors']) {
+      collectColorVariablesFromGroup(collection['Colors'], allColorVariables, 'Colors', collectionName);
+    } else {
+      // Если нет группы Colors, ищем цветовые переменные во всех группах
+      for (const groupName in collection) {
+        const group = collection[groupName];
+        if (group && typeof group === 'object') {
+          collectColorVariablesFromGroup(group, allColorVariables, groupName, collectionName);
+        }
+      }
+    }
+  }
+  
+  console.log(`✓ Найдено ${allColorVariables.length} цветовых переменных`);
+  
+  if (allColorVariables.length === 0) {
+    console.error('❌ Нет цветовых переменных в сохранённых данных');
+    console.error('💡 Проверьте структуру импортированных данных - возможно нужно перезагрузить дизайн-систему');
+    return null;
+  }
+  
+  // ============================================================================
+  // ШАГ 1: Ищем через скрытые переменные 2.X → 1.Theme (ПРИОРИТЕТ)
+  // ============================================================================
+  // Шаг 1: Определяем режим 2.X объекта → ищем в нужной коллекции → берем первый режим → ищем в 1.Theme
+  console.log(`\n📍 ШАГ 1 (ПРИОРИТЕТ): Ищем скрытые переменные в 2.X по hex, затем в 1.Theme`);
+  
+  // Проходим по всем коллекциям 2.X и определяем, какая применена на объекте
+  const collection2XNames = Object.keys(savedVariables).filter(name => /^2\.\d+/.test(name));
+  
+  if (collection2XNames.length === 0) {
+    console.log(`⚠️ Не найдено ни одной коллекции 2.X`);
+  } else {
+    console.log(`✓ Найдено ${collection2XNames.length} коллекций 2.X: ${collection2XNames.join(', ')}`);
+    
+    // Пытаемся определить режим для каждой коллекции и найти применённую
+    // Используем переменные из внешней области видимости
+    targetCollectionName = null;
+    mode2X = null;
+    targetCollectionNumber = null;
+    
+    for (const collName of collection2XNames) {
+      const collMode = getModeForCollection(node, collName, savedVariables);
+      
+      if (collMode) {
+        // Определяем номер коллекции для этого режима
+        const collNumber = getCollectionNumberForMode(collMode);
+        
+        // Проверяем, что коллекция соответствует режиму
+        if (collNumber && collName.startsWith(collNumber)) {
+          targetCollectionName = collName;
+          mode2X = collMode;
+          targetCollectionNumber = collNumber;
+          console.log(`✅ Применена коллекция: "${collName}", режим: "${collMode}"`);
+          break;
+        }
+      }
+    }
+    
+    if (!targetCollectionName || !mode2X || !targetCollectionNumber) {
+      console.log(`⚠️ Не удалось определить применённую коллекцию 2.X для объекта`);
+    } else {
+      console.log(`✓ Режим 2.X для объекта: "${mode2X}"`);
+      console.log(`✓ Режим "${mode2X}" соответствует коллекции ${targetCollectionNumber}`);
+      
+      // Собираем скрытые переменные ТОЛЬКО из нужной коллекции
+      const hidden2XVariables = allColorVariables.filter(v => {
+          // Только скрытые переменные
+          if (v.hiddenFromPublishing !== true) {
+            return false;
+          }
+          
+        // Только из нужной коллекции (например, 2.1)
+        return v.collectionName.startsWith(targetCollectionNumber);
+      });
+      
+      console.log(`✓ Найдено ${hidden2XVariables.length} скрытых переменных в коллекции ${targetCollectionNumber}`);
+      
+      // Ищем совпадение по hex ТОЛЬКО в активном режиме объекта (mode2X)
+      for (const variable of hidden2XVariables) {
+        console.log(`\n🔍 Проверяем скрытую переменную: ${variable.name} (коллекция: ${variable.collectionName})`);
+        
+        // ВАЖНО: Проверяем правила применения для переменной из 2.X
+        // Это нужно, чтобы line-переменные не применялись к текстам и наоборот
+        if (!canApplyColorVariableToNode(variable.name, node)) {
+          console.log(`❌ Переменная ${variable.name} не прошла проверку правил применения (пропускаем)`);
+        continue;
+      }
+      
+        // Проверяем цвет ТОЛЬКО в активном режиме объекта (mode2X)
+        const colorInActiveMode = variable.modes[mode2X];
+        
+        if (!colorInActiveMode || typeof colorInActiveMode !== 'string') {
+          console.log(`⚠️ Переменная ${variable.name} не имеет цвета в режиме "${mode2X}"`);
+          continue;
+        }
+        
+        const parsed = parseColorString(colorInActiveMode);
+        
+        if (!colorsMatch(parsed.hex, parsed.opacity, hexColor, opacity)) {
+          // Цвет в активном режиме не совпадает - пропускаем переменную
+          console.log(`⚠️ Цвет в режиме "${mode2X}" (${parsed.hex}) не совпадает с искомым (${hexColor})`);
+          continue;
+        }
+        
+        // Нашли совпадение в активном режиме!
+        console.log(`✅ Найдено совпадение с искомым цветом ${hexColor} (opacity: ${Math.round(opacity * 100)}%) в активном режиме "${mode2X}"`);
+        
+        // Нашли переменную с нужным hex! Теперь берем цвет первого режима
+        console.log(`✓ Получаем цвет первого режима для переменной ${variable.name}`);
+        
+        // Определяем первый режим для этой переменной (Mail, Docs, Admin, Messenger)
+        const firstModeName = Object.keys(variable.modes).find(key => {
+          // Пропускаем служебные поля
+          if (key === 'key' || key === 'id' || key === 'scopes' || 
+              key === 'hiddenFromPublishing' || key === 'description') {
+            return false;
+          }
+          return true;
+        });
+        
+        if (!firstModeName) {
+          console.log(`⚠️ Не удалось определить первый режим для переменной ${variable.name}`);
+          continue;
+        }
+        
+        const firstModeColor = variable.modes[firstModeName];
+        
+        if (!firstModeColor || typeof firstModeColor !== 'string') {
+          console.log(`⚠️ Не удалось получить цвет первого режима "${firstModeName}"`);
+          continue;
+        }
+        
+        const firstModeParsed = parseColorString(firstModeColor);
+        console.log(`✓ Первый режим: "${firstModeName}", цвет: ${firstModeParsed.hex}, прозрачность: ${Math.round(firstModeParsed.opacity * 100)}%`);
+        
+        // ========================================================================
+        // ПРОМЕЖУТОЧНЫЙ ШАГ: Ищем в коллекции 2. Product
+        // ========================================================================
+        console.log(`🔍 ПРОМЕЖУТОЧНЫЙ ШАГ: Ищем цвет ${firstModeParsed.hex} (opacity: ${Math.round(firstModeParsed.opacity * 100)}%) в коллекции 2. Product`);
+        
+        // Находим коллекцию 2. Product
+        const productCollectionName = Object.keys(savedVariables).find(name => 
+          name.startsWith('2.') && !name.match(/^2\.\d+/)
+        );
+        
+        if (!productCollectionName) {
+          console.log(`⚠️ Коллекция 2. Product не найдена, переходим напрямую к 1.Theme`);
+          // Если нет 2. Product, используем цвет из первого режима 2.X
+          var finalColorToSearch = firstModeParsed;
+        } else {
+          console.log(`✓ Найдена коллекция: ${productCollectionName}`);
+          
+          // Собираем все переменные из 2. Product
+          const productVariables = allColorVariables.filter(v => {
+            return v.collectionName === productCollectionName;
+          });
+          
+          console.log(`✓ Найдено ${productVariables.length} переменных в коллекции ${productCollectionName}`);
+          
+          // Ищем переменную с нужным цветом в первом режиме 2. Product
+          let foundProductVar = null;
+          
+          for (const productVar of productVariables) {
+            // Проверяем scopes - переменная должна быть совместима
+            if (!isScopeCompatible(productVar.scopes, requiredScopes)) {
+              continue;
+            }
+            
+            // Проверяем правила применения (text/line группы)
+            if (!canApplyColorVariableToNode(productVar.name, node)) {
+              continue;
+            }
+            
+            // Определяем первый режим этой переменной
+            const productFirstMode = Object.keys(productVar.modes).find(key => {
+              if (key === 'key' || key === 'id' || key === 'scopes' || 
+                  key === 'hiddenFromPublishing' || key === 'description') {
+                return false;
+              }
+              return true;
+            });
+            
+            if (!productFirstMode) continue;
+            
+            const productColor = productVar.modes[productFirstMode];
+            if (!productColor || typeof productColor !== 'string') continue;
+            
+            const productParsed = parseColorString(productColor);
+            
+            // Сравниваем с цветом из первого режима 2.X
+            if (colorsMatch(productParsed.hex, productParsed.opacity, firstModeParsed.hex, firstModeParsed.opacity)) {
+              foundProductVar = productVar;
+              console.log(`✅ Найдена переменная в 2. Product: ${productVar.name} (режим ${productFirstMode}, цвет ${productParsed.hex}, прозрачность ${Math.round(productParsed.opacity * 100)}%)`);
+              break;
+            }
+          }
+          
+          if (!foundProductVar) {
+            console.log(`⚠️ Переменная не найдена в 2. Product, используем цвет из 2.X`);
+            var finalColorToSearch = firstModeParsed;
+          } else {
+            // Берем первый режим из найденной переменной в 2. Product
+            const productVarFirstMode = Object.keys(foundProductVar.modes).find(key => {
+              if (key === 'key' || key === 'id' || key === 'scopes' || 
+                  key === 'hiddenFromPublishing' || key === 'description') {
+                return false;
+              }
+              return true;
+            });
+            
+            if (!productVarFirstMode) {
+              console.log(`⚠️ Не удалось определить первый режим в 2. Product`);
+              var finalColorToSearch = firstModeParsed;
+            } else {
+              const productVarFirstColor = foundProductVar.modes[productVarFirstMode];
+              if (!productVarFirstColor || typeof productVarFirstColor !== 'string') {
+                console.log(`⚠️ Не удалось получить цвет первого режима в 2. Product`);
+                var finalColorToSearch = firstModeParsed;
+              } else {
+                var finalColorToSearch = parseColorString(productVarFirstColor);
+                console.log(`✓ Первый режим 2. Product: "${productVarFirstMode}", финальный цвет для поиска: ${finalColorToSearch.hex}, прозрачность: ${Math.round(finalColorToSearch.opacity * 100)}%`);
+              }
+            }
+          }
+        }
+        
+        // Теперь ищем финальный цвет в коллекции 1.Theme с учетом режима объекта (Light/Dark)
+        console.log(`🔍 Ищем финальный цвет ${finalColorToSearch.hex} (opacity: ${Math.round(finalColorToSearch.opacity * 100)}%) в коллекции 1.Theme (режим объекта: ${themeMode})`);
+        
+        // Находим название коллекции 1.Theme
+        themeCollectionName = Object.keys(savedVariables).find(name => 
+          name.startsWith('1.') || name.startsWith('1 ')
+        );
+        
+        if (!themeCollectionName) {
+          console.log(`⚠️ Коллекция 1.Theme не найдена`);
+          continue;
+        }
+        
+        // Фильтруем переменные из 1.Theme
+        const theme1Variables = allColorVariables.filter(v => {
+          return v.collectionName === themeCollectionName && v.hiddenFromPublishing !== true;
+        });
+        
+        console.log(`✓ Найдено ${theme1Variables.length} видимых переменных в 1.Theme`);
+        
+        // Ищем переменную с нужным hex и прозрачностью в режиме объекта
+        for (const themeVar of theme1Variables) {
+          const colorInThemeMode = themeVar.modes[themeMode];
+          
+          if (colorInThemeMode && typeof colorInThemeMode === 'string') {
+            const themeParsed = parseColorString(colorInThemeMode);
+            
+            if (colorsMatch(themeParsed.hex, themeParsed.opacity, finalColorToSearch.hex, finalColorToSearch.opacity)) {
+              console.log(`✅ Найдено совпадение в 1.Theme: ${themeVar.name} (режим ${themeMode}, цвет ${themeParsed.hex}, прозрачность ${Math.round(themeParsed.opacity * 100)}%)`);
+              
+              // Проверяем scopes
+              if (!isScopeCompatible(themeVar.scopes, requiredScopes)) {
+                console.log(`❌ Переменная ${themeVar.name} не прошла проверку scopes`);
+                continue;
+              }
+              
+              console.log(`✓ Переменная ${themeVar.name} прошла проверку scopes`);
+              
+              // Проверяем правила применения
+              if (!canApplyColorVariableToNode(themeVar.name, node)) {
+                console.log(`❌ Переменная ${themeVar.name} не прошла проверку правил применения`);
+                continue;
+              }
+              
+              console.log(`✓ Переменная ${themeVar.name} прошла проверку правил применения`);
+              
+              // Все проверки пройдены - возвращаем эту переменную!
+              const result = {
+                name: themeVar.name,
+                key: themeVar.key,
+                id: themeVar.id,
+                scopes: themeVar.scopes,
+                modes: themeVar.modes,
+                collectionName: themeVar.collectionName,
+                matchedMode: themeMode,
+                collectionPriority: getCollectionPriority(themeVar.collectionName),
+                hiddenFromPublishing: themeVar.hiddenFromPublishing || false,
+                description: themeVar.description || ''
+              };
+              
+              console.log(`✅ ШАГ 1: Найдена переменная ${themeVar.name} из 1.Theme через 2.X`);
+              return result;
+            }
+          }
+        }
+        
+        console.log(`⚠️ Не найдено совпадение в 1.Theme для финального цвета ${finalColorToSearch.hex} (opacity: ${Math.round(finalColorToSearch.opacity * 100)}%)`);
+      }
+    }
+  }
+  
+  // ============================================================================
+  // ШАГ 1.5: Ищем напрямую в 2. Product (ПРОМЕЖУТОЧНЫЙ ВАРИАНТ)
+  // ============================================================================
+  console.log(`\n📍 ШАГ 1.5 (ПРОМЕЖУТОЧНЫЙ): Ищем переменные напрямую в коллекции 2. Product`);
+  console.log(`   Ищем цвет: ${hexColor} (opacity: ${Math.round(opacity * 100)}%)`);
+  
+  // Находим коллекцию 2. Product
+  const productCollectionName = Object.keys(savedVariables).find(name => 
+    name.startsWith('2.') && !name.match(/^2\.\d+/)
+  );
+  
+  if (!productCollectionName) {
+    console.log('⚠️ Коллекция 2. Product не найдена, пропускаем ШАГ 1.5');
+  } else {
+    console.log(`✓ Коллекция 2. Product: ${productCollectionName}`);
+    
+    // Собираем все переменные из 2. Product (скрытые)
+    const productVariables = allColorVariables.filter(v => {
+      return v.collectionName === productCollectionName && v.hiddenFromPublishing === true;
+    });
+    
+    console.log(`✓ Найдено ${productVariables.length} скрытых переменных в ${productCollectionName}`);
+    
+    // Ищем совпадение по hex в ПЕРВОМ режиме 2. Product (не mode2X!)
+    for (const variable of productVariables) {
+      console.log(`\n🔍 Проверяем переменную в 2. Product: ${variable.name}`);
+      
+      // Проверяем правила применения
+      if (!canApplyColorVariableToNode(variable.name, node)) {
+        console.log(`❌ Переменная ${variable.name} не прошла проверку правил применения (пропускаем)`);
+        continue;
+      }
+      
+      // Определяем первый режим для этой переменной (например, "Mail, Calendar, Disc, Yango")
+      const firstProductModeName = Object.keys(variable.modes).find(key => {
+        if (key === 'key' || key === 'id' || key === 'scopes' || 
+            key === 'hiddenFromPublishing' || key === 'description') {
+          return false;
+        }
+        return true;
+      });
+      
+      if (!firstProductModeName) {
+        console.log(`⚠️ Не удалось определить первый режим для переменной ${variable.name}`);
+        continue;
+      }
+      
+      const colorInFirstMode = variable.modes[firstProductModeName];
+      
+      if (!colorInFirstMode || typeof colorInFirstMode !== 'string') {
+        console.log(`⚠️ Переменная ${variable.name} не имеет цвета в режиме "${firstProductModeName}"`);
+        continue;
+      }
+      
+      const parsed = parseColorString(colorInFirstMode);
+      
+      if (!colorsMatch(parsed.hex, parsed.opacity, hexColor, opacity)) {
+        console.log(`⚠️ Цвет в режиме "${firstProductModeName}" (${parsed.hex}) не совпадает с искомым (${hexColor})`);
+        continue;
+      }
+      
+      // Нашли совпадение в 2. Product!
+      console.log(`✅ Найдено совпадение в 2. Product: ${variable.name} в режиме "${firstProductModeName}" (цвет: ${parsed.hex}, прозрачность: ${Math.round(parsed.opacity * 100)}%)`);
+      
+      // Теперь ищем эту переменную в 1.Theme
+      console.log(`🔍 Ищем финальный цвет из 2. Product в 1.Theme (режим объекта: ${themeMode})`);
+      
+      // Используем цвет первого режима из 2. Product для поиска в 1.Theme
+      // (это тот же цвет, который мы только что нашли)
+      const firstModeParsed = parsed;
+      console.log(`✓ Первый режим 2. Product: "${firstProductModeName}", финальный цвет для поиска: ${firstModeParsed.hex}, прозрачность: ${Math.round(firstModeParsed.opacity * 100)}%`);
+      
+      // Ищем финальный цвет в 1.Theme
+      if (!themeCollectionName) {
+        themeCollectionName = Object.keys(savedVariables).find(name => 
+          name.startsWith('1.') || name.startsWith('1 ')
+        );
+      }
+      
+      if (!themeCollectionName) {
+        console.log(`⚠️ Коллекция 1.Theme не найдена`);
+        continue;
+      }
+      
+      const themeVisibleVars = allColorVariables.filter(v => {
+        return v.collectionName === themeCollectionName && 
+               v.hiddenFromPublishing !== true &&
+               isScopeCompatible(v.scopes, requiredScopes);
+      });
+      
+      console.log(`✓ Найдено ${themeVisibleVars.length} видимых переменных в 1.Theme`);
+      
+      // Ищем совпадение в 1.Theme по цвету первого режима из 2. Product
+      for (const themeVar of themeVisibleVars) {
+        const colorInThemeMode = themeVar.modes[themeMode];
+        
+        if (!colorInThemeMode || typeof colorInThemeMode !== 'string') {
+          continue;
+        }
+        
+        const themeParsed = parseColorString(colorInThemeMode);
+        
+        if (colorsMatch(themeParsed.hex, themeParsed.opacity, firstModeParsed.hex, firstModeParsed.opacity)) {
+          console.log(`✅ Найдено совпадение в 1.Theme: ${themeVar.name} (режим ${themeMode}, цвет ${themeParsed.hex}, прозрачность ${Math.round(themeParsed.opacity * 100)}%)`);
+          
+          // Проверяем правила применения и scopes
+          if (!isScopeCompatible(themeVar.scopes, requiredScopes)) {
+            console.log(`⚠️ Переменная ${themeVar.name} не прошла проверку scopes`);
+            continue;
+          }
+          
+          if (!canApplyColorVariableToNode(themeVar.name, node)) {
+            console.log(`⚠️ Переменная ${themeVar.name} не прошла проверку правил применения`);
+            continue;
+          }
+          
+          console.log(`✅ ШАГ 1.5: Найдена переменная ${themeVar.name} из 1.Theme через 2. Product`);
+          
+          return {
+            name: themeVar.name,
+            key: themeVar.key,
+            id: themeVar.id,
+            scopes: themeVar.scopes,
+            modes: themeVar.modes,
+            collectionName: themeVar.collectionName,
+            matchedMode: themeMode,
+            collectionPriority: getCollectionPriority(themeVar.collectionName),
+            hiddenFromPublishing: themeVar.hiddenFromPublishing || false,
+            description: themeVar.description || ''
+          };
+        }
+      }
+    }
+    
+    console.log(`⚠️ Не найдено совпадений в 2. Product для цвета ${hexColor}`);
+  }
+  
+  // ============================================================================
+  // ШАГ 2: Ищем напрямую в 1.Theme (ЗАПАСНОЙ ВАРИАНТ)
+  // ============================================================================
+  console.log(`\n📍 ШАГ 2 (ЗАПАСНОЙ): Ищем переменные напрямую в коллекции 1.Theme`);
+  console.log(`   Ищем цвет: ${hexColor} (opacity: ${Math.round(opacity * 100)}%)`);
+  console.log(`   Тип узла: ${node.type}, Имя узла: ${node.name}`);
+  
+  // Находим название коллекции 1.Theme (если еще не нашли)
+  if (!themeCollectionName) {
+    themeCollectionName = Object.keys(savedVariables).find(name => 
+      name.startsWith('1.') || name.startsWith('1 ')
+    );
+  }
+  
+  if (!themeCollectionName) {
+    console.log('⚠️ Коллекция 1.Theme не найдена, пропускаем ШАГ 2');
+  } else {
+    console.log(`✓ Коллекция 1.Theme: ${themeCollectionName}`);
+    
+    // Фильтруем переменные из 1.Theme с hiddenFromPublishing: false
+    const themeVisibleVariables = allColorVariables.filter(v => {
+      // Только из коллекции 1.Theme
+      if (v.collectionName !== themeCollectionName) {
+        return false;
+      }
+      
+      // Только с hiddenFromPublishing: false
+      if (v.hiddenFromPublishing === true) {
+        return false;
+      }
+      
+      // Проверяем совместимость scopes
+      return isScopeCompatible(v.scopes, requiredScopes);
+    });
+  
+    console.log(`✓ Найдено ${themeVisibleVariables.length} видимых переменных в 1.Theme`);
+    
+    // Фильтруем по правилам применения
+    const themeFilteredVariables = themeVisibleVariables.filter(v => {
+      return canApplyColorVariableToNode(v.name, node);
+    });
+    
+    console.log(`✓ После фильтрации по правилам: ${themeFilteredVariables.length} переменных`);
+    
+    // Ищем совпадения
+    const themeMatchingVariables = [];
+    
+    for (const variable of themeFilteredVariables) {
+      // Проверяем ТОЛЬКО режим объекта (Light или Dark)
+      const colorInMode = variable.modes[themeMode];
+      
+      if (colorInMode && typeof colorInMode === 'string') {
+        const parsed = parseColorString(colorInMode);
+        
+        if (colorsMatch(parsed.hex, parsed.opacity, hexColor, opacity)) {
+          themeMatchingVariables.push({
+            name: variable.name,
+            key: variable.key,
+            id: variable.id,
+            scopes: variable.scopes,
+            modes: variable.modes,
+            collectionName: variable.collectionName,
+            matchedMode: themeMode,
+            collectionPriority: getCollectionPriority(variable.collectionName),
+            hiddenFromPublishing: variable.hiddenFromPublishing || false,
+            description: variable.description || ''
+          });
+          console.log(`✅ Найдено совпадение в 1.Theme: ${variable.name} в режиме ${themeMode} (цвет: ${parsed.hex}, прозрачность: ${Math.round(parsed.opacity * 100)}%)`);
+        }
+      }
+    }
+    
+    // Если нашли в 1.Theme - возвращаем лучшую
+    if (themeMatchingVariables.length > 0) {
+      console.log(`\n✅ ШАГ 2: Найдено ${themeMatchingVariables.length} совпадений в 1.Theme`);
+      themeMatchingVariables.forEach((v, i) => {
+        console.log(`   ${i + 1}. ${v.name} (priority: ${v.collectionPriority})`);
+      });
+      
+      // Сортируем по приоритету (хотя все из одной коллекции, но на всякий случай)
+      themeMatchingVariables.sort((a, b) => a.collectionPriority - b.collectionPriority);
+      const selectedVariable = themeMatchingVariables[0];
+      console.log(`✅ Выбрана переменная из 1.Theme: ${selectedVariable.name}`);
+      return selectedVariable;
+    }
+    
+    console.log(`⚠️ В коллекции 1.Theme не найдено совпадений`);
+  }
+  
+  console.error(`❌ Не найдена подходящая переменная для цвета ${hexColor} (opacity: ${Math.round(opacity * 100)}%)`);
+  return null;
+}
+
+/**
+ * Рекурсивная валидация ноды и детей
+ */
+function validateNodeRecursive(node, mode, savedTokens, allIssues) {
+  const nodeIssues = validateNode(node, mode, savedTokens);
+  allIssues.push(...nodeIssues);
+  
+  if ('children' in node) {
+    for (const child of node.children) {
+      validateNodeRecursive(child, mode, savedTokens, allIssues);
+    }
+  }
+}
+
+// ============================================
+// END OF TOKEN STORAGE & MATCHING FUNCTIONS
+// ============================================
+
+/**
+ * Подсчёт нод рекурсивно
+ */
+function countNodesRecursive(node) {
+  let count = 1;
+  
+  if ('children' in node) {
+    for (const child of node.children) {
+      count += countNodesRecursive(child);
+    }
+  }
+  
+  return count;
+}
+
+// ============================================
+// КОНЕЦ ФУНКЦИЙ TOKEN GUARD
+// ============================================
+
 // Запуск плагина с разными UI в зависимости от команды
 if (figma.command === 'node-id-inspector') {
   // Для Node ID Inspector используем минимальный UI
@@ -63,33 +2339,33 @@ if (figma.command === 'node-id-inspector') {
   (async () => {
     try {
       const savedData = await figma.clientStorage.getAsync('dsv-tokens');
-      if (savedData && savedData.tokens && Array.isArray(savedData.tokens)) {
-        savedTokensFromJson = savedData.tokens;
+      if (savedData && savedData.variables) {
+        savedTokensFromJson = savedData;
         console.log('DSV: Загружено сохранённых токенов из clientStorage:', savedData.count);
         
-        // Отправляем токены в UI через небольшую задержку
         setTimeout(() => {
           figma.ui.postMessage({ 
             type: 'set-mode', 
             mode: 'design-system-validator' 
           });
           
-          // Отправляем информацию о сохранённых токенах
           figma.ui.postMessage({
-            type: 'dsv-tokens-loaded-from-storage',
+            type: 'dsv-tokens-imported',
             count: savedData.count,
-            savedAt: savedData.savedAt
+            timestamp: savedData.timestamp,
+            variables: savedData.variables,
+            json: JSON.stringify(savedData, null, 2)
           });
         }, 100);
       } else {
-        // Нет сохранённых токенов
+        console.log('DSV: Токены не найдены в clientStorage');
         setTimeout(() => {
           figma.ui.postMessage({ type: 'set-mode', mode: 'design-system-validator' });
+          figma.ui.postMessage({ type: 'dsv-tokens-not-found' });
         }, 100);
       }
     } catch (error) {
       console.error('DSV: Ошибка при загрузке токенов из clientStorage:', error);
-      // В случае ошибки просто показываем UI
       setTimeout(() => {
         figma.ui.postMessage({ type: 'set-mode', mode: 'design-system-validator' });
       }, 100);
@@ -481,17 +2757,24 @@ figma.ui.onmessage = async function(msg) {
         });
       }
     } else if (msg.type === 'dsv-validate') {
-      // Design System Validator - запуск проверки
+      // Design System Validator - запуск проверки (упрощенная версия Token Guard)
       try {
-        console.log('Design System Validator: Запуск проверки, режим:', msg.mode, 'опции:', msg.options);
-        const options = msg.options || {};
-        const report = await validateDesignSystem(msg.mode, options);
+        console.log('DSV: Запуск упрощенной проверки (Token Guard версия)');
+        const result = await checkNumericVariables();
+        
         figma.ui.postMessage({
-          type: 'dsv-validation-result',
-          report: report
+          type: 'dsv-validation-complete',
+          data: {
+            checked: result.checked,
+            errors: result.errors,
+            stats: {
+              nodesChecked: result.checked,
+              errorsFound: result.errors.length
+            }
+          }
         });
       } catch (error) {
-        console.error('Design System Validator: Ошибка при проверке:', error);
+        console.error('DSV: Ошибка при проверке:', error);
         figma.ui.postMessage({
           type: 'dsv-validation-error',
           error: error.message || 'Неизвестная ошибка при проверке'
@@ -508,22 +2791,42 @@ figma.ui.onmessage = async function(msg) {
       } catch (error) {
         console.error('Design System Validator: Ошибка при переходе к ноде:', error);
       }
-    } else if (msg.type === 'dsv-export-tokens') {
-      // Design System Validator - экспорт токенов в JSON
+    } else if (msg.type === 'dsv-fix-node-errors') {
+      // Design System Validator - исправление всех ошибок ноды
       try {
-        console.log('Design System Validator: Запуск экспорта токенов');
-        const exportData = await exportTokensToJSON();
+        console.log('DSV: Исправление ошибок ноды:', msg.errors.length);
+        const result = await fixAllDSVErrors(msg.errors);
+        
         figma.ui.postMessage({
-          type: 'dsv-export-tokens-result',
-          success: true,
-          data: exportData
+          type: 'dsv-fix-complete',
+          result: result
+        });
+        
+        // Автоматически перезапускаем проверку
+        setTimeout(async () => {
+          try {
+            const checkResult = await checkNumericVariables();
+            figma.ui.postMessage({
+              type: 'dsv-validation-complete',
+              data: {
+                checked: checkResult.checked,
+                errors: checkResult.errors,
+                stats: {
+                  nodesChecked: checkResult.checked,
+                  errorsFound: checkResult.errors.length
+                }
+              }
         });
       } catch (error) {
-        console.error('Design System Validator: Ошибка при экспорте токенов:', error);
+            console.error('DSV: Ошибка при повторной проверке:', error);
+          }
+        }, 300);
+        
+      } catch (error) {
+        console.error('DSV: Ошибка при исправлении:', error);
         figma.ui.postMessage({
-          type: 'dsv-export-tokens-result',
-          success: false,
-          error: error.message || 'Не удалось экспортировать токены'
+          type: 'dsv-fix-error',
+          error: error.message
         });
       }
     } else if (msg.type === 'analyze-component-properties') {
@@ -621,18 +2924,6 @@ figma.ui.onmessage = async function(msg) {
           error: error.message || 'Неизвестная ошибка'
         });
       }
-    } else if (msg.type === 'dsv-clear-tokens') {
-      // Design System Validator - очистка токенов
-      console.log('DSV: Очистка сохранённых токенов');
-      savedTokensFromJson = null;
-      
-      // Очищаем также clientStorage
-      try {
-        await figma.clientStorage.deleteAsync('dsv-tokens');
-        console.log('DSV: Токены удалены из clientStorage');
-      } catch (error) {
-        console.error('DSV: Ошибка при удалении токенов из clientStorage:', error);
-      }
     } else if (msg.type === 'dsv-get-tokens-status') {
       // Design System Validator - запрос статуса токенов
       const hasTokens = savedTokensFromJson !== null && Array.isArray(savedTokensFromJson);
@@ -648,7 +2939,9 @@ figma.ui.onmessage = async function(msg) {
     } else if (msg.type === 'dsv-bind-token') {
       // Design System Validator - привязка токена к свойству
       try {
-        console.log('DSV: Привязка токена', msg.tokenId, 'к свойству', msg.property, 'элемента', msg.nodeId);
+        console.log('🔧 DSV: Привязка токена', msg.tokenId, 'к свойству', msg.property, 'элемента', msg.nodeId);
+        console.log('🔍 DEBUG: Полные данные токена:', msg.token);
+        
         const result = await bindTokenToProperty(msg.nodeId, msg.property, msg.tokenId);
         
         figma.ui.postMessage({
@@ -671,6 +2964,99 @@ figma.ui.onmessage = async function(msg) {
             error: error.message || 'Неизвестная ошибка при привязке токена'
           },
           issueIndex: msg.issueIndex
+        });
+      }
+    } else if (msg.type === 'dsv-import-tokens') {
+      // Design System Validator - импорт токенов из текущего файла
+      try {
+        console.log('📥 DSV: Запущен импорт токенов из текущего файла...');
+        
+        const tokensData = await importTokensFromCurrentFile();
+        
+        // Сохраняем в clientStorage
+        await figma.clientStorage.setAsync('dsv-tokens', tokensData);
+        
+        // Сохраняем в память плагина
+        savedTokensFromJson = tokensData;
+        
+        // Отправляем результат в UI (с JSON токенов)
+        figma.ui.postMessage({
+          type: 'dsv-tokens-imported',
+          count: tokensData.count,
+          timestamp: tokensData.timestamp,
+          variables: tokensData.variables,
+          json: JSON.stringify(tokensData, null, 2)
+        });
+        
+        figma.notify(`✓ Импортировано ${tokensData.count} токенов`);
+        console.log(`✅ DSV: Импортировано и сохранено ${tokensData.count} токенов`);
+        
+      } catch (error) {
+        console.error('❌ DSV: Ошибка импорта токенов:', error);
+        figma.ui.postMessage({
+          type: 'error',
+          message: `Ошибка импорта токенов: ${error.message}`
+        });
+        figma.notify(`✗ Ошибка импорта: ${error.message}`, { error: true });
+      }
+    } else if (msg.type === 'dsv-fix-issue') {
+      // Design System Validator - автоисправление одной проблемы
+      try {
+        const { issue } = msg;
+        console.log(`🔧 DSV: Автоисправление для "${issue.nodeName}"...`);
+        
+        const success = await autoFixIssue(issue);
+        
+        if (success) {
+          figma.ui.postMessage({
+            type: 'dsv-fix-success',
+            issueId: issue.nodeId
+          });
+          figma.notify(`✓ Токен применён к "${issue.nodeName}"`);
+          console.log(`✅ DSV: Проблема исправлена`);
+        } else {
+          figma.ui.postMessage({
+            type: 'dsv-fix-failed',
+            issueId: issue.nodeId,
+            message: 'Не удалось применить токен'
+          });
+          figma.notify(`✗ Не удалось применить токен`, { error: true });
+        }
+        
+      } catch (error) {
+        console.error('❌ DSV: Ошибка автоисправления:', error);
+        figma.ui.postMessage({
+          type: 'error',
+          message: `Ошибка автоисправления: ${error.message}`
+        });
+      }
+    } else if (msg.type === 'dsv-fix-all') {
+      // Design System Validator - автоисправление всех проблем
+      try {
+        const { issues } = msg;
+        console.log(`🔧 DSV: Массовое исправление: ${issues.length} ошибок`);
+        
+        // Используем новую функцию fixAllDSVErrors
+        const result = await fixAllDSVErrors(issues);
+        
+        // Отправляем результат
+        figma.ui.postMessage({
+          type: 'dsv-fix-all-complete',
+          results: {
+            fixed: result.successCount,
+            failed: result.failedCount,
+            total: issues.length
+          }
+        });
+        
+        figma.notify(`✓ Исправлено: ${results.fixed}, Ошибок: ${results.failed}`);
+        console.log(`✅ DSV: Автоисправление завершено. Исправлено: ${results.fixed}, Ошибок: ${results.failed}`);
+        
+      } catch (error) {
+        console.error('❌ DSV: Ошибка массового автоисправления:', error);
+        figma.ui.postMessage({
+          type: 'error',
+          message: `Ошибка автоисправления: ${error.message}`
         });
       }
     } else if (msg.type === 'get-all-text-from-page') {
@@ -1674,11 +4060,11 @@ async function fixError(nodeId, errorType) {
         // Ищем переменные цвета в файле с названием "orb-icon"
         try {
           // Получаем все локальные переменные
-          const allVariables = figma.variables.getLocalVariables();
+          const allVariables = await figma.variables.getLocalVariablesAsync();
           
           // Ищем коллекцию переменных с названием, содержащим "orb-icon"
           let iconVariableCollection = null;
-          for (const collection of figma.variables.getLocalVariableCollections()) {
+          for (const collection of await figma.variables.getLocalVariableCollectionsAsync()) {
             if (collection.name.toLowerCase().includes('orb-icon')) {
               iconVariableCollection = collection;
               break;
@@ -2163,11 +4549,11 @@ async function fixError(nodeId, errorType) {
         // Ищем переменные цвета в коллекции icon-color
         try {
           // Получаем все локальные переменные
-          const allVariables = figma.variables.getLocalVariables();
+          const allVariables = await figma.variables.getLocalVariablesAsync();
           
           // Ищем коллекцию переменных с названием icon-color
           let iconColorCollection = null;
-          for (const collection of figma.variables.getLocalVariableCollections()) {
+          for (const collection of await figma.variables.getLocalVariableCollectionsAsync()) {
             if (collection.name.toLowerCase().includes('icon-color')) {
               iconColorCollection = collection;
               break;
@@ -2988,18 +5374,6 @@ const localRules = {
   requiredStates: ['default', 'hover', 'focus', 'disabled']
 };
 
-// Функция конвертации RGB в HEX
-function rgbToHex(rgb) {
-  if (!rgb || typeof rgb !== 'object' || rgb.r === undefined || rgb.g === undefined || rgb.b === undefined) {
-    console.warn('AI Design Lint: Некорректный объект цвета:', rgb);
-    return '#000000'; // Возвращаем черный цвет по умолчанию
-  }
-  const r = Math.round(rgb.r * 255);
-  const g = Math.round(rgb.g * 255);
-  const b = Math.round(rgb.b * 255);
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-}
-
 // Функция очистки объекта от Symbol для postMessage
 function sanitizeForPostMessage(obj) {
   if (obj === null || obj === undefined) {
@@ -3130,7 +5504,7 @@ async function analyzeNodeRecursively(node, analysis, path, isRootComponent = fa
           } else if (fill.color && typeof fill.color === 'object') {
             // Hardcoded цвет - конвертируем в hex
             try {
-              const hexColor = rgbToHex(fill.color);
+              const hexColor = rgbToHex(fill.color.r, fill.color.g, fill.color.b);
               analysis.hardcodedValues.push({
                 type: 'color',
                 value: hexColor,
@@ -4054,10 +6428,10 @@ async function validateDesignSystem(mode, options = {}) {
     console.log('DSV: Загружено variables:', variables.size, 'шт.');
     
     // Логируем источник токенов
-    if (savedTokensFromJson && savedTokensFromJson.length > 0) {
-      console.log('DSV: Используются токены из загруженного JSON файла:', savedTokensFromJson.length);
+    if (savedTokensFromJson && savedTokensFromJson.variables) {
+      console.log('DSV: Используются токены из clientStorage для поиска:', Object.keys(savedTokensFromJson.variables).length, 'коллекций');
     } else {
-      console.log('DSV: Используются токены из Figma API');
+      console.log('DSV: Токены из clientStorage не найдены');
     }
     
     // Логирование первых 5 variables для проверки
@@ -4079,7 +6453,20 @@ async function validateDesignSystem(mode, options = {}) {
       
       // Проверяем каждую ноду в батче
       for (const node of batch) {
-        await checkNodeVariables(node, variables, mode, report, options);
+        // DEBUG: Проверяем что savedTokensFromJson передаётся
+        if (processedCount === 0) {
+          console.log('🔍 DEBUG validateDesignSystem: savedTokensFromJson:', {
+            exists: !!savedTokensFromJson,
+            hasVariables: !!(savedTokensFromJson && savedTokensFromJson.variables),
+            collections: savedTokensFromJson && savedTokensFromJson.variables ? 
+              Object.keys(savedTokensFromJson.variables) : [],
+            firstCollection: savedTokensFromJson && savedTokensFromJson.variables ? 
+              Object.keys(savedTokensFromJson.variables)[0] : null
+          });
+        }
+        
+        // ПЕРЕДАЁМ savedTokensFromJson для поиска токенов
+        await checkNodeVariables(node, variables, mode, report, options, savedTokensFromJson);
         processedCount++;
         
         // Отправляем прогресс каждые 10 нод
@@ -4312,8 +6699,10 @@ async function getVariablesByMode(mode, tokensFromJson = null) {
  * @param {Map} variables - Map доступных variables
  * @param {string} mode - Режим проверки
  * @param {Object} report - Отчёт для записи результатов
+ * @param {Object} options - Опции проверки
+ * @param {Object} savedTokens - Сохранённые токены из clientStorage для поиска
  */
-async function checkNodeVariables(node, variables, mode, report, options = {}) {
+async function checkNodeVariables(node, variables, mode, report, options = {}, savedTokens = null) {
   if (!node || !node.id) return;
   
   // 1. Исключаем проверку COMPONENT_SET (родительский фрейм компонента)
@@ -4430,7 +6819,10 @@ async function checkNodeVariables(node, variables, mode, report, options = {}) {
             console.log(`  ---`);
             
             // Поиск подходящего токена по значению
-            const suggestedToken = findTokenByValue(variables, cornerValue, 'cornerRadius');
+            // ИСПОЛЬЗУЕМ savedTokens.variables для поиска токенов
+            const suggestedToken = (savedTokens && savedTokens.variables) ? 
+              findClosestVariable(cornerValue, 'cornerRadius', savedTokens.variables) : 
+              null;
             
             console.log(`DSV: Поиск токена для угла ${corner.name}, значение: ${safeStringify(cornerValue)}, найден:`, suggestedToken ? suggestedToken.name : 'нет');
             
@@ -4544,7 +6936,41 @@ async function checkNodeVariables(node, variables, mode, report, options = {}) {
           // Поиск подходящего токена по значению
           const rawValue = node[prop.key]; // Оригинальное значение для поиска
           const displayValue = getPropertyValue(node, prop.key); // Отформатированное для отображения
-          const suggestedToken = findTokenByValue(variables, rawValue, prop.key);
+          
+          // DEBUG: Проверяем параметры поиска
+          console.log(`🔍 DEBUG поиск токена:`, {
+            property: prop.displayName,
+            value: rawValue,
+            hasSavedTokens: !!(savedTokens && savedTokens.variables),
+            collectionsCount: savedTokens && savedTokens.variables ? Object.keys(savedTokens.variables).length : 0
+          });
+          
+          // Выбираем функцию поиска в зависимости от типа свойства
+          let suggestedToken = null;
+          if (savedTokens && savedTokens.variables) {
+            if (prop.key === 'fills' || prop.key === 'strokes') {
+              // Для цветов используем findColorVariable
+              // Извлекаем цвет из первого элемента массива
+              if (Array.isArray(rawValue) && rawValue.length > 0 && rawValue[0].type === 'SOLID' && rawValue[0].color) {
+                const color = rawValue[0].color;
+                const hexColor = rgbToHex(color.r, color.g, color.b);
+                
+                // Проверяем что hexColor не null
+                if (hexColor) {
+                  suggestedToken = findColorVariable(hexColor, 'Light', savedTokens.variables);
+                }
+              }
+            } else {
+              // Для числовых значений используем findClosestVariable
+              suggestedToken = findClosestVariable(rawValue, prop.key, savedTokens.variables);
+            }
+          }
+          
+          console.log(`🔍 DEBUG результат поиска:`, {
+            property: prop.displayName,
+            value: rawValue,
+            foundToken: suggestedToken ? suggestedToken.name : 'NULL'
+          });
           
           console.log(`DSV: Поиск токена для ${prop.displayName}, значение:`, displayValue, ', найден:', suggestedToken ? suggestedToken.name : 'нет');
           
@@ -4585,7 +7011,9 @@ async function checkNodeVariables(node, variables, mode, report, options = {}) {
           // Поиск подходящего токена по значению
           const rawValue = node[prop.key]; // Оригинальное значение для поиска
           const displayValue = getPropertyValue(node, prop.key); // Отформатированное для отображения
-          const suggestedToken = findTokenByValue(variables, rawValue, prop.key);
+          const suggestedToken = (savedTokens && savedTokens.variables) ? 
+            findClosestVariable(rawValue, prop.key, savedTokens.variables) : 
+            null;
           
           nodeIssues.push({
             type: 'No Variable',
@@ -4623,7 +7051,9 @@ async function checkNodeVariables(node, variables, mode, report, options = {}) {
             // Поиск подходящего токена по значению
             const rawValue = node[prop.key]; // Оригинальное значение для поиска
             const displayValue = getPropertyValue(node, prop.key); // Отформатированное для отображения
-            const suggestedToken = findTokenByValue(variables, rawValue, prop.key);
+            const suggestedToken = (savedTokens && savedTokens.variables) ? 
+              findClosestVariable(rawValue, prop.key, savedTokens.variables) : 
+              null;
             
             nodeIssues.push({
               type: 'No Variable',
@@ -4686,13 +7116,15 @@ async function validateVariableBinding(variableId, variables, mode, node, proper
       } else {
         // Variable существует в Figma
         // Проверяем, может быть она есть в JSON токенах по имени
-        const tokenByName = findTokenByName(variables, variable.name);
+        let tokenByName = findTokenByName(variables, variable.name);
+        
+        // Если не нашли в локальных токенах, ищем в импортированных (savedTokens)
+        if (!tokenByName && savedTokens && savedTokens.variables) {
+          tokenByName = findTokenInSavedJson(savedTokens.variables, variable.name);
+        }
         
         if (tokenByName) {
-          // Токен найден по имени в JSON - всё в порядке!
-          // Убираем избыточное логирование
-          // console.log(`DSV: ✓ Токен "${variable.name}" найден по имени`);
-          
+          // Токен найден по имени - всё в порядке!
           // Проверяем на deprecated
           if (variable.name && (variable.name.includes('_deprecated') || variable.name.includes('old-'))) {
             issues.push({
@@ -4758,6 +7190,34 @@ function findTokenByName(variables, name) {
       return token;
     }
   }
+  return null;
+}
+
+/**
+ * Ищет токен по имени в импортированных JSON токенах
+ * @param {Object} savedVariables - Объект с коллекциями токенов
+ * @param {string} name - Имя токена для поиска
+ * @returns {Object|null} - Токен или null
+ */
+function findTokenInSavedJson(savedVariables, name) {
+  if (!savedVariables || typeof savedVariables !== 'object') {
+    return null;
+  }
+  
+  // Перебираем все коллекции
+  for (const collectionName in savedVariables) {
+    const collection = savedVariables[collectionName];
+    if (!collection || typeof collection !== 'object') continue;
+    
+    // Перебираем токены в коллекции
+    for (const tokenKey in collection) {
+      const token = collection[tokenKey];
+      if (token && token.name === name) {
+        return token;
+      }
+    }
+  }
+  
   return null;
 }
 
@@ -4946,29 +7406,67 @@ async function bindTokenToProperty(nodeId, property, tokenId) {
     // Получаем токен (variable)
     let variable = null;
     let tokenName = null;
+    let tokenKey = null;
     
-    // Ищем токен в сохранённом JSON для получения имени
-    if (savedTokensFromJson && Array.isArray(savedTokensFromJson)) {
-      const jsonToken = savedTokensFromJson.find(t => 
-        (t.id === tokenId) || 
-        (`json-token-${t.name.replace(/[^a-zA-Z0-9]/g, '-')}` === tokenId)
-      );
+    // Ищем токен в сохранённом JSON для получения имени и ключа
+    if (savedTokensFromJson && savedTokensFromJson.variables) {
+      console.log('🔍 DSV: Ищем токен в savedTokensFromJson.variables, ID:', tokenId);
       
-      if (jsonToken) {
-        tokenName = jsonToken.name;
-        console.log(`DSV: Найден токен в JSON: ${tokenName}, ID: ${tokenId}`);
+      // Ищем токен во всех коллекциях
+      for (const collectionName in savedTokensFromJson.variables) {
+        const collection = savedTokensFromJson.variables[collectionName];
+        
+        // Ищем во всех группах коллекции
+        function searchInObject(obj, path = '') {
+          for (const key in obj) {
+            const item = obj[key];
+      
+            if (item && typeof item === 'object') {
+              // Если это сам токен (имеет id и value)
+              if (item.id === tokenId) {
+                tokenName = key;
+                tokenKey = item.key;
+                console.log(`✅ DSV: Найден токен: ${tokenName}, key: ${tokenKey}`);
+                return true;
+              }
+              
+              // Рекурсивно ищем в вложенных объектах
+              if (searchInObject(item, path ? `${path}/${key}` : key)) {
+                return true;
       }
     }
+          }
+          return false;
+        }
+        
+        if (searchInObject(collection)) {
+          break;
+        }
+      }
+    }
+    
+    console.log(`🔍 DSV: Результат поиска - tokenName: ${tokenName}, tokenKey: ${tokenKey}`);
     
     // Пробуем получить токен через Figma API по ID
     try {
       variable = await figma.variables.getVariableByIdAsync(tokenId);
       console.log(`DSV: ✓ Токен найден по ID через API: ${variable.name}`);
     } catch (e) {
-      console.log(`DSV: Токен не найден по ID (${tokenId}), ищем по имени: ${tokenName}`);
+      console.log(`DSV: Токен не найден по ID (${tokenId}), ищем по ключу: ${tokenKey}`);
     }
     
-    // Если не найден по ID и есть имя - ищем по имени во всех доступных токенах
+    // Если не найден по ID - пробуем импортировать по ключу
+    if (!variable && tokenKey) {
+      console.log(`DSV: Пробуем импортировать токен по ключу: ${tokenKey}`);
+      try {
+        variable = await figma.variables.importVariableByKeyAsync(tokenKey);
+        console.log(`DSV: ✓ Токен импортирован из библиотеки: ${variable.name}`);
+      } catch (e) {
+        console.log(`DSV: ⚠️ Не удалось импортировать токен по ключу:`, e.message);
+      }
+    }
+    
+    // Если не найден по ID и ключу - ищем по имени во всех доступных токенах
     if (!variable && tokenName) {
       console.log(`DSV: Поиск токена "${tokenName}" по имени...`);
       
@@ -5334,163 +7832,9 @@ async function resolveVariableAlias(aliasId, allVariables, visited = new Set()) 
 }
 
 /**
- * Конвертирует RGB цвет в HEX формат
- * @param {Object} rgb - Объект с r, g, b, a (значения от 0 до 1)
- * @returns {string} HEX цвет вида #RRGGBB или #RRGGBBAA
- */
-function rgbToHex(rgb) {
-  if (!rgb || typeof rgb !== 'object' || rgb.r === undefined) {
-    return null;
-  }
-  
-  const r = Math.round(rgb.r * 255);
-  const g = Math.round(rgb.g * 255);
-  const b = Math.round(rgb.b * 255);
-  const a = rgb.a !== undefined ? Math.round(rgb.a * 255) : 255;
-  
-  const toHex = (n) => {
-    const hex = n.toString(16).toUpperCase();
-    return hex.length === 1 ? '0' + hex : hex;
-  };
-  
-  if (a < 255) {
-    return `#${toHex(r)}${toHex(g)}${toHex(b)}${toHex(a)}`;
-  }
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-/**
  * Экспортирует все токены (variables) из текущего файла в JSON формат
  * @returns {Promise<Object>} Объект с токенами и метаданными
  */
-async function exportTokensToJSON() {
-  console.log('DSV Export: Начало экспорта токенов');
-  
-  try {
-    // Получаем все variables из Figma
-    const allVariables = await figma.variables.getLocalVariablesAsync();
-    console.log(`DSV Export: Найдено variables: ${allVariables.length}`);
-    
-    if (allVariables.length === 0) {
-      console.warn('DSV Export: Variables не найдены в файле');
-      return {
-        tokens: [],
-        metadata: {
-          exportDate: new Date().toISOString(),
-          totalTokens: 0,
-          localTokens: 0,
-          remoteTokens: 0,
-          figmaFileName: figma.root.name,
-          warning: 'Variables не найдены в файле'
-        }
-      };
-    }
-    
-    // Подсчёт local и remote
-    const localCount = allVariables.filter(v => !v.remote).length;
-    const remoteCount = allVariables.filter(v => v.remote).length;
-    
-    console.log(`DSV Export: Local variables: ${localCount}, Remote variables: ${remoteCount}`);
-    
-    // Преобразуем в формат для плагина
-    const tokens = [];
-    
-    for (const variable of allVariables) {
-      const token = {
-        name: variable.name,
-        type: variable.resolvedType,
-        id: variable.id,
-        isRemote: variable.remote || false
-      };
-      
-      // Добавляем опциональные поля если они есть
-      if (variable.description) {
-        token.description = variable.description;
-      }
-      
-      if (variable.scopes && variable.scopes.length > 0) {
-        token.scopes = variable.scopes;
-      }
-      
-      if (variable.hiddenFromPublishing !== undefined) {
-        token.hiddenFromPublishing = variable.hiddenFromPublishing;
-      }
-      
-      // Пытаемся получить значение (для первого mode)
-      try {
-        if (variable.valuesByMode) {
-          const modes = Object.keys(variable.valuesByMode);
-          if (modes.length > 0) {
-            const firstModeValue = variable.valuesByMode[modes[0]];
-            
-            // Обрабатываем разные типы значений
-            if (firstModeValue !== undefined && firstModeValue !== null) {
-              // Для alias токенов (ссылка на другой токен)
-              if (typeof firstModeValue === 'object' && firstModeValue.type === 'VARIABLE_ALIAS') {
-                token.value = `{alias: ${firstModeValue.id}}`;
-                token.isAlias = true;
-                
-                // Разрешаем алиас и получаем реальное значение
-                try {
-                  const resolvedValue = await resolveVariableAlias(firstModeValue.id, allVariables);
-                  if (resolvedValue !== null) {
-                    token.resolvedValue = resolvedValue;
-                    
-                    // Добавляем HEX для цветовых токенов-алиасов
-                    if (variable.resolvedType === 'COLOR' && resolvedValue.r !== undefined) {
-                      token.hexValue = rgbToHex(resolvedValue);
-                    }
-                    
-                    console.log(`DSV Export: Алиас разрешён для "${variable.name}"${token.hexValue ? ` (${token.hexValue})` : ''}`);
-                  }
-                } catch (e) {
-                  console.warn(`DSV Export: Не удалось разрешить алиас для ${variable.name}:`, e);
-                }
-              } else {
-                token.value = firstModeValue;
-                token.isAlias = false;
-                
-                // Добавляем HEX для цветовых токенов
-                if (variable.resolvedType === 'COLOR' && firstModeValue.r !== undefined) {
-                  token.hexValue = rgbToHex(firstModeValue);
-                }
-              }
-            }
-          }
-        }
-      } catch (e) {
-        // Игнорируем ошибки при получении значения
-        console.warn(`DSV Export: Не удалось получить значение для ${variable.name}:`, e);
-      }
-      
-      tokens.push(token);
-    }
-    
-    // Создаём финальный JSON объект
-    const exportData = {
-      tokens: tokens,
-      metadata: {
-        exportDate: new Date().toISOString(),
-        totalTokens: tokens.length,
-        localTokens: localCount,
-        remoteTokens: remoteCount,
-        figmaFileName: figma.root.name,
-        exportedBy: 'Orbita DS ✦ Tools - Design System Validator',
-        version: '3.0.4'
-      }
-    };
-    
-    console.log('DSV Export: Экспорт завершён успешно');
-    console.log(`DSV Export: Токенов экспортировано: ${tokens.length}`);
-    
-    return exportData;
-    
-  } catch (error) {
-    console.error('DSV Export: Ошибка при экспорте:', error);
-    throw new Error(`Не удалось экспортировать токены: ${error.message}`);
-  }
-}
-
 // === Analyze component properties (pre-export analysis) ===
 async function analyzeComponentProperties() {
   // Required for documentAccess: dynamic-page
