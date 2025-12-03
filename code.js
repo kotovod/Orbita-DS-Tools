@@ -750,6 +750,23 @@ function extractNumericValues(node, options = {}) {
   }
   } // Конец проверки strokes
   
+  // Фильтруем нулевые значения если включена настройка skipZeroValues
+  // По умолчанию skipZeroValues = true (пропускаем нули)
+  if (options.skipZeroValues !== false) {
+    const filteredValues = values.filter(item => {
+      // Только для числовых значений проверяем на 0
+      if (item.valueType === 'numeric') {
+        const isZero = typeof item.value === 'number' && Math.abs(item.value) < 0.001;
+        if (isZero) {
+          console.log(`DSV: ⏭️ Пропущено значение ≈0: ${item.nodeName} → ${item.type} = ${item.value}`);
+          return false;
+        }
+      }
+      return true;
+    });
+    return filteredValues;
+  }
+  
   return values;
 }
 
@@ -777,7 +794,12 @@ function traverseNode(node, callback, skipSelf = false) {
 async function checkNumericVariables(options = {}) {
   try {
     console.log('🔍 DSV: Начинаем проверку числовых переменных (Token Guard версия)...');
-    console.log('📋 DSV: Настройки проверки:', options.propertiesToCheck || 'по умолчанию');
+    console.log('📋 DSV: Настройки проверки:', {
+      skipInstances: options.skipInstances || false,
+      filterOrbPrefix: options.filterOrbPrefix || false,
+      skipZeroValues: options.skipZeroValues !== false,
+      propertiesToCheck: options.propertiesToCheck || 'по умолчанию'
+    });
     
     const selection = figma.currentPage.selection;
     
@@ -816,6 +838,34 @@ async function checkNumericVariables(options = {}) {
     
     // Теперь обрабатываем все ноды асинхронно
     for (const node of nodesToCheck) {
+      // Проверка настройки skipInstances - пропускаем INSTANCE
+      if (options.skipInstances && node.type === 'INSTANCE') {
+        console.log(`⏭️ DSV: Пропущен INSTANCE "${node.name}" (skipInstances включён)`);
+        continue;
+      }
+      
+      // Проверка настройки filterOrbPrefix - только orb-* компоненты
+      if (options.filterOrbPrefix && (node.type === 'INSTANCE' || node.type === 'COMPONENT')) {
+        const nodeName = node.name || '';
+        let hasOrbPrefix = nodeName.toLowerCase().startsWith('orb-');
+        
+        // Для INSTANCE также проверяем mainComponent
+        if (node.type === 'INSTANCE' && !hasOrbPrefix) {
+          try {
+            if (node.mainComponent && node.mainComponent.name) {
+              hasOrbPrefix = node.mainComponent.name.toLowerCase().startsWith('orb-');
+            }
+          } catch (e) {
+            // Игнорируем ошибки
+          }
+        }
+        
+        if (!hasOrbPrefix) {
+          console.log(`⏭️ DSV: Пропущен компонент без "orb-" префикса: "${nodeName}"`);
+          continue;
+        }
+      }
+      
       nodesChecked++;
       
       try {
@@ -1618,15 +1668,70 @@ async function getModeForCollection(node, collectionName, savedVariables) {
     return null;
   }
   
-  console.log(`   ⚠️ Коллекция не найдена локально, используем savedVariables`);
+  console.log(`   ⚠️ Коллекция "${collectionName}" не найдена локально, ищем среди импортированных`);
   
-  // Коллекция не найдена локально - используем savedVariables
+  // Коллекция не найдена локально - значит она импортирована
+  // ВАЖНО: Сбросить currentNode на начальный узел, т.к. она могла измениться в предыдущем цикле
+  currentNode = node;
+  
+  // Идём вверх по иерархии, собирая коллекции со всех уровней
+  let importedDepth = 0;
+  while (currentNode) {
+    const resolvedModes = currentNode.resolvedVariableModes || {};
+    const explicitModes = currentNode.explicitVariableModes || {};
+    
+    console.log(`   [${importedDepth}] Проверяем узел для импортированных: ${currentNode.name} (${currentNode.type})`);
+    
+    // Собираем все collectionId из режимов
+    const allCollectionIds = new Set([
+      ...Object.keys(resolvedModes),
+      ...Object.keys(explicitModes)
+    ]);
+    
+    console.log(`   Найдено ${allCollectionIds.size} коллекций на узле`);
+    
+    // Ищем нужную коллекцию среди всех на этом уровне
+    for (const collectionId of allCollectionIds) {
+      try {
+        // Получаем коллекцию асинхронно (для импортированных)
+        const collection = await figma.variables.getVariableCollectionByIdAsync(collectionId);
+        
+        if (collection && collection.name === collectionName) {
+          console.log(`   ✓ Найдена импортированная коллекция "${collectionName}", ID: ${collectionId}`);
+          
+          const modeId = resolvedModes[collectionId] || explicitModes[collectionId];
+          if (modeId) {
+            const mode = collection.modes.find(m => m.modeId === modeId);
+            if (mode) {
+              console.log(`   ✅ Найден режим импортированной коллекции "${collectionName}" на узле "${currentNode.name}": ${mode.name}`);
+              return mode.name;
+            }
+          }
+        }
+      } catch (e) {
+        console.log(`   ⚠️ Не удалось получить коллекцию ${collectionId}: ${e.message}`);
+      }
+    }
+    
+    // Переходим к родителю
+    if (currentNode.parent && currentNode.parent.type !== 'PAGE') {
+      currentNode = currentNode.parent;
+      importedDepth++;
+    } else {
+      console.log(`   ⚠️ Достигли корня дерева (PAGE или null) для импортированных`);
+      break;
+    }
+  }
+  
+  console.log(`   ⚠️ Режим импортированной коллекции не найден в иерархии, используем savedVariables как fallback`);
+  
+  // Fallback: используем savedVariables если обход иерархии не дал результата
   if (savedVariables[collectionName]) {
     const collection = savedVariables[collectionName];
     if (collection['Colors']) {
       const firstMode = findFirstModeInGroup(collection['Colors']);
       if (firstMode) {
-        console.log(`   ✓ Найден режим из savedVariables: ${firstMode}`);
+        console.log(`   ✓ Найден режим из savedVariables (fallback): ${firstMode}`);
         return firstMode;
       }
     }
@@ -2819,6 +2924,15 @@ figma.ui.onmessage = async function(msg) {
           type: 'custom-design-system-loaded', 
           data: null 
         });
+      }
+    } else if (msg.type === 'show-notify') {
+      // Универсальный обработчик для показа figma.notify() из UI
+      const message = msg.message || '';
+      const isError = msg.error || false;
+      const timeout = msg.timeout || 4000;
+      
+      if (message) {
+        figma.notify(message, { error: isError, timeout: timeout });
       }
     } else if (msg.type === 'dsv-validate') {
       // Design System Validator - запуск проверки (упрощенная версия Token Guard)
@@ -6907,7 +7021,10 @@ async function checkNodeVariables(node, variables, mode, report, options = {}, s
         const cornerValue = node[corner.key];
         
         // Проверяем есть ли значение у этого угла
-        if (cornerValue !== undefined && cornerValue !== 0) {
+        // Учитываем настройку skipZeroValues (включая близкие к 0 значения)
+        const isZeroCorner = typeof cornerValue === 'number' && Math.abs(cornerValue) < 0.001;
+        const skipZeroCorner = options.skipZeroValues !== false && isZeroCorner;
+        if (cornerValue !== undefined && !skipZeroCorner) {
           checkedIndividualCorners = true;
           
           if (cornerBoundVar) {
@@ -7094,7 +7211,11 @@ async function checkNodeVariables(node, variables, mode, report, options = {}, s
         // Для опциональных свойств: проверяем только если свойство реально задано
         const hasValue = hasPropertyValue(node, prop.key);
         
-        if (hasValue && shouldReportMissingVariable(node, prop.key)) {
+        // Учитываем настройку skipZeroValues для опциональных свойств (включая близкие к 0 значения)
+        const isZeroOptional = typeof propertyValue === 'number' && Math.abs(propertyValue) < 0.001;
+        const skipZeroOptional = options.skipZeroValues !== false && isZeroOptional;
+        
+        if (hasValue && !skipZeroOptional && shouldReportMissingVariable(node, prop.key)) {
           // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ для отладки
           console.warn(`DSV: 🔍 Опциональное свойство без токена:`);
           console.log(`  Node: "${getSafeNodeName(node)}"`);
@@ -7132,8 +7253,17 @@ async function checkNodeVariables(node, variables, mode, report, options = {}, s
           });
         }
       } else {
-        // Для обязательных свойств: проверяем если значение задано и не равно 0
-        if (propertyValue !== undefined && propertyValue !== 0 && propertyValue !== null) {
+        // Для обязательных свойств: проверяем если значение задано
+        // Учитываем настройку skipZeroValues - если включена, пропускаем значения = 0
+        // Проверяем на 0 как число (включая близкие значения типа 0.0001)
+        const isZeroValue = typeof propertyValue === 'number' && Math.abs(propertyValue) < 0.001;
+        const skipZeroValue = options.skipZeroValues !== false && isZeroValue;
+        
+        if (skipZeroValue) {
+          console.log(`DSV: Пропущено значение ≈0 для ${prop.displayName}: ${propertyValue} (skipZeroValues: ${options.skipZeroValues})`);
+        }
+        
+        if (propertyValue !== undefined && propertyValue !== null && !skipZeroValue) {
           if (shouldReportMissingVariable(node, prop.key)) {
             // ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ для отладки
             console.warn(`DSV: 🔍 Свойство без токена:`);
