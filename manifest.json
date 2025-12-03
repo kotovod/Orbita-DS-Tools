@@ -19,7 +19,7 @@
       "command": "check-icons"
     },
     {
-      "name": "Design System Validator",
+      "name": "Validator",
       "command": "design-system-validator"
     },
     { "separator": true },
