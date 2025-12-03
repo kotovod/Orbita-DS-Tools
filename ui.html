@@ -195,10 +195,12 @@
 
     h1 {
       font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
+      font-weight: 400;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
+      padding: 0 0;
+      margin-top: 0px;
     }
     
     .header-container {
@@ -825,7 +827,7 @@
     /* Унифицированные Карточки Результатов */
     .unified-results-container {
       margin-top: 0;
-      margin-bottom: 16px;
+      margin-bottom: 0px;
     }
     
     .unified-card {
@@ -1208,11 +1210,6 @@
     }
     
     .dsv-settings-btn svg path {
-      fill: #AAAAAA;
-      transition: fill 0.2s ease;
-    }
-    
-    .dsv-settings-btn:hover svg path {
       fill: #FFFFFF;
     }
     
@@ -1228,6 +1225,11 @@
       height: 344px;
       overflow-y: auto;
       overflow-x: hidden;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+    .dsv-settings-panel::-webkit-scrollbar {
+      display: none; /* Chrome/Safari/Opera */
     }
     
     /* DSV Заголовок секции проблем */
@@ -1251,8 +1253,14 @@
     
     /* DSV Список проблем */
     .dsv-issues-list {
-      max-height: 300px;
+      max-height: 320px;
       overflow-y: auto;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+      border-radius: 16px;
+    }
+    .dsv-issues-list::-webkit-scrollbar {
+      display: none; /* Chrome/Safari/Opera */
     }
     
     /* DSV Индикатор загрузки */
@@ -1296,18 +1304,44 @@
     /* DSV Кнопка исправить (в карточке) */
     .dsv-fix-node-btn {
       background-color: #5c5c66;
-      font-size: 12px;
-      padding: 8px 12px;
+      padding: 4px;
       margin-left: 8px;
       flex-shrink: 0;
-      width: auto;
-      white-space: nowrap;
-      border-radius: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .dsv-fix-node-btn svg {
+      width: 24px;
+      height: 24px;
     }
     
     .dsv-fix-node-btn:hover {
       background-color: #E55520;
       box-shadow: none;
+    }
+    
+    .dsv-fix-node-btn .dsv-btn-count {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background-color: #F44336;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      display: none;;
     }
     
     /* DSV Кнопка исправить всё */
@@ -1323,6 +1357,92 @@
       box-shadow: none;
     }
     
+    /* DSV контейнер для кнопки и подтверждения */
+    .dsv-fix-all-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    /* DSV inline-подтверждение */
+    .dsv-fix-confirm {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      /* background: rgba(245, 158, 11, 0.1); */
+      /* border: 1px solid rgba(245, 158, 11, 0.3); */
+      border-radius: 8px;
+      padding: 4px 0px;
+      animation: dsvFadeIn 0.2s ease;
+    }
+    
+    @keyframes dsvFadeIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .dsv-fix-confirm-text {
+      font-size: 12px;
+      color: #F59E0B;
+      white-space: nowrap;
+    }
+    
+    .dsv-fix-confirm-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .dsv-fix-confirm-yes {
+      background: #F59E0B;
+      color: #1C1C1E;
+    }
+    
+    .dsv-fix-confirm-yes:hover {
+      background: #FBBF24;
+    }
+    
+    .dsv-fix-confirm-no {
+      background: rgba(255, 255, 255, 0.1);
+      color: #AAAAAA;
+    }
+    
+    .dsv-fix-confirm-no:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+    }
+    
+    /* DSV статус результата исправления */
+    .dsv-fix-status {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 12px;
+      animation: dsvFadeIn 0.2s ease;
+    }
+    
+    .dsv-fix-status.success {
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid rgba(76, 175, 80, 0.3);
+      color: #4CAF50;
+    }
+    
+    .dsv-fix-status.partial {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #F59E0B;
+    }
+    
+    .dsv-fix-status.error {
+      background: rgba(244, 67, 54, 0.1);
+      border: 1px solid rgba(244, 67, 54, 0.3);
+      color: #F44336;
+    }
+    
     /* DSV все кнопки — без box-shadow и transform при hover/active */
     .design-system-validator-section .unified-button:hover {
       box-shadow: none;
@@ -1336,8 +1456,9 @@
     
     /* DSV Счётчик ошибок в кнопке */
     .dsv-btn-count {
-      opacity: 0.5;
+      /* opacity: 0.5; */
       margin-left: 4px;
+      display: none; /* Временно скрыто */
     }
     
     /* Кнопка назад */
@@ -2488,6 +2609,13 @@
               <div class="tooltip">Будут проверяться только компоненты дизайн-системы (с префиксом "orb-"), нативные и сторонние компоненты будут пропущены</div>
             </div>
           </div>
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-skip-zero-values" checked>
+            <label for="dsv-skip-zero-values">Пропускать значения = 0</label>
+            <div class="tooltip-icon">?
+              <div class="tooltip">Значения равные 0 (отступы, радиусы, gap) не будут отмечаться как ошибки. Обычно нулевые значения не требуют привязки переменных</div>
+            </div>
+          </div>
         </div>
 
         <!-- Настройки проверяемых свойств -->
@@ -2554,10 +2682,20 @@
             <div class="unified-section-title" style="margin-bottom: 0;">
               Проблемы <span id="dsv-total-issues" class="dsv-issues-count">0</span>
             </div>
-            <button id="dsv-fix-all-button" class="unified-button dsv-fix-all-btn" style="display: none;">
-              Исправить всё
-            </button>
+            <div class="dsv-fix-all-container">
+              <button id="dsv-fix-all-button" class="unified-button dsv-fix-all-btn" style="display: none;">
+                Исправить всё
+              </button>
+              <!-- Inline-подтверждение -->
+              <div id="dsv-fix-confirm" class="dsv-fix-confirm" style="display: none;">
+                <span class="dsv-fix-confirm-text">Исправить <span id="dsv-fix-confirm-count">0</span> проблем?</span>
+                <button id="dsv-fix-confirm-yes" class="dsv-fix-confirm-btn dsv-fix-confirm-yes">Да</button>
+                <button id="dsv-fix-confirm-no" class="dsv-fix-confirm-btn dsv-fix-confirm-no">Нет</button>
+              </div>
+            </div>
           </div>
+          <!-- Статус результата исправления -->
+          <div id="dsv-fix-status" class="dsv-fix-status" style="display: none;"></div>
           <div id="dsv-issues-list" class="unified-results-container dsv-issues-list">
             <!-- Issues will be inserted here -->
           </div>
@@ -4440,7 +4578,7 @@ ${designSystemContext}
         
         // Меняем заголовок
         if (headerTitle) {
-          headerTitle.innerHTML = 'Orbita DS&nbsp;&nbsp;✦&nbsp;&nbsp;Design System Validator';
+          headerTitle.innerHTML = 'Orbita DS&nbsp;&nbsp;✦&nbsp;&nbsp;Validator';
         }
         
         // Скрываем badge с ошибками
@@ -4528,9 +4666,9 @@ ${designSystemContext}
           componentPropertiesSection.style.display = 'none';
         }
         
-        // Восстанавливаем оригинальный заголовок
+        // Устанавливаем заголовок Icons Checker
         if (headerTitle) {
-          headerTitle.innerHTML = 'Orbita DS&nbsp;&nbsp;✦&nbsp;&nbsp;Tools';
+          headerTitle.innerHTML = 'Orbita DS&nbsp;&nbsp;✦&nbsp;&nbsp;Icons Checker';
         }
       }
     }
@@ -4538,6 +4676,18 @@ ${designSystemContext}
     // Design System Validator - глобальное состояние
     let dsvValidationMode = 'all'; // local, remote, all
     let dsvCurrentReport = null;
+    
+    // Функция для показа уведомлений через figma.notify()
+    function showFigmaNotify(message, isError = false, timeout = 4000) {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'show-notify',
+          message: message,
+          error: isError,
+          timeout: timeout
+        }
+      }, '*');
+    }
     
     // Вспомогательная функция для управления кнопкой "Исправить все"
     function updateDSVFixAllButton(issues) {
@@ -4635,7 +4785,27 @@ ${designSystemContext}
         });
       }
       
-      // Обработчик кнопки "Исправить все"
+      // Обработчик кнопки "Исправить все" с inline-подтверждением
+      const fixConfirmContainer = document.getElementById('dsv-fix-confirm');
+      const fixConfirmCount = document.getElementById('dsv-fix-confirm-count');
+      const fixConfirmYes = document.getElementById('dsv-fix-confirm-yes');
+      const fixConfirmNo = document.getElementById('dsv-fix-confirm-no');
+      let pendingFixableIssues = null;
+      
+      // Функция скрытия подтверждения
+      function hideDSVFixConfirm() {
+        if (fixConfirmContainer) fixConfirmContainer.style.display = 'none';
+        if (fixAllButton) fixAllButton.style.display = 'inline-block';
+        pendingFixableIssues = null;
+      }
+      
+      // Функция показа подтверждения
+      function showDSVFixConfirm(count) {
+        if (fixConfirmCount) fixConfirmCount.textContent = count;
+        if (fixAllButton) fixAllButton.style.display = 'none';
+        if (fixConfirmContainer) fixConfirmContainer.style.display = 'flex';
+      }
+      
       if (fixAllButton) {
         fixAllButton.addEventListener('click', () => {
           if (!dsvCurrentReport || !dsvCurrentReport.issues) {
@@ -4646,25 +4816,52 @@ ${designSystemContext}
           const fixableIssues = dsvCurrentReport.issues.filter(issue => issue.suggestedToken);
           
           if (fixableIssues.length === 0) {
-            alert('Нет проблем, которые можно исправить автоматически');
+            showFigmaNotify('Нет проблем, которые можно исправить автоматически', true);
             return;
           }
           
-          if (confirm(`Исправить ${fixableIssues.length} проблем автоматически?`)) {
-            debugLog(`DSV: Запрос автоисправления ${fixableIssues.length} проблем`);
-            
-            // Показываем индикатор загрузки
+          // Сохраняем issues и показываем inline-подтверждение
+          pendingFixableIssues = fixableIssues;
+          showDSVFixConfirm(fixableIssues.length);
+        });
+      }
+      
+      // Обработчик кнопки "Да" в подтверждении
+      if (fixConfirmYes) {
+        fixConfirmYes.addEventListener('click', () => {
+          if (!pendingFixableIssues || pendingFixableIssues.length === 0) {
+            hideDSVFixConfirm();
+            return;
+          }
+          
+          // Сохраняем копию issues до очистки
+          const issuesToFix = pendingFixableIssues;
+          
+          debugLog(`DSV: Запрос автоисправления ${issuesToFix.length} проблем`);
+          
+          // Скрываем подтверждение (это обнуляет pendingFixableIssues)
+          hideDSVFixConfirm();
+          
+          // Показываем индикатор загрузки
+          if (fixAllButton) {
             fixAllButton.disabled = true;
             fixAllButton.textContent = 'Исправляю...';
-            
-            // Отправляем запрос на автоисправление
-            parent.postMessage({
-              pluginMessage: {
-                type: 'dsv-fix-all',
-                issues: fixableIssues
-              }
-            }, '*');
           }
+          
+          // Отправляем запрос на автоисправление
+          parent.postMessage({
+            pluginMessage: {
+              type: 'dsv-fix-all',
+              issues: issuesToFix
+            }
+          }, '*');
+        });
+      }
+      
+      // Обработчик кнопки "Нет" в подтверждении
+      if (fixConfirmNo) {
+        fixConfirmNo.addEventListener('click', () => {
+          hideDSVFixConfirm();
         });
       }
       
@@ -4722,6 +4919,9 @@ ${designSystemContext}
       const filterOrbPrefixCheckbox = document.getElementById('dsv-filter-orb-prefix');
       const filterOrbPrefix = filterOrbPrefixCheckbox ? filterOrbPrefixCheckbox.checked : true;
       
+      const skipZeroValuesCheckbox = document.getElementById('dsv-skip-zero-values');
+      const skipZeroValues = skipZeroValuesCheckbox ? skipZeroValuesCheckbox.checked : true;
+      
       // Собираем настройки проверяемых свойств
       const propertiesToCheck = {
         fills: document.getElementById('dsv-check-fills')?.checked ?? true,
@@ -4734,7 +4934,7 @@ ${designSystemContext}
         size: document.getElementById('dsv-check-size')?.checked ?? false
       };
       
-      debugLog('DSV: Настройки проверки:', propertiesToCheck, 'filterOrbPrefix:', filterOrbPrefix);
+      debugLog('DSV: Настройки проверки:', propertiesToCheck, 'filterOrbPrefix:', filterOrbPrefix, 'skipZeroValues:', skipZeroValues);
       
       // Отправляем сообщение в плагин с опциями
       // Токены теперь хранятся в памяти плагина (code.js)
@@ -4745,6 +4945,7 @@ ${designSystemContext}
           options: {
             skipInstances: skipInstances,
             filterOrbPrefix: filterOrbPrefix,
+            skipZeroValues: skipZeroValues,
             propertiesToCheck: propertiesToCheck
           }
         }
@@ -5969,9 +6170,9 @@ ${designSystemContext}
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        // Небольшая пауза перед alert (чтобы скачивание началось)
+        // Показываем уведомление после скачивания
         setTimeout(() => {
-          alert('✅ Токены экспортированы в JSON файл!');
+          showFigmaNotify('✓ Токены экспортированы в JSON файл');
         }, 100);
       } else if (message.type === 'dsv-json-exported') {
         // Design System Validator - JSON экспортирован
@@ -5989,7 +6190,7 @@ ${designSystemContext}
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        alert('✅ Токены экспортированы в JSON файл!');
+        showFigmaNotify('✓ Токены экспортированы в JSON файл');
       } else if (message.type === 'dsv-json-loaded') {
         // Design System Validator - JSON загружен из файла
         debugLog('DSV: JSON загружен', message.count);
@@ -6037,7 +6238,7 @@ ${designSystemContext}
           }
         }
         
-        alert('✅ Токены загружены из JSON файла!');
+        showFigmaNotify('✓ Токены загружены из JSON файла');
       } else if (message.type === 'dsv-tokens-not-found') {
         // Design System Validator - токены не найдены при запуске
         debugLog('DSV: Токены не найдены в памяти');
@@ -6182,7 +6383,11 @@ ${designSystemContext}
                 </div>
                 <button class="dsv-fix-node-button unified-button dsv-fix-node-btn" 
                         data-node-id="${group.nodeId}">
-                  Исправить<span class="dsv-btn-count">${group.errors.length}</span>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M7.99899 20L14.999 12.997C15.5285 12.4679 15.8261 11.7501 15.8264 11.0016C15.8267 10.253 15.5296 9.53501 15.0005 9.0055C14.4714 8.476 13.7536 8.17837 13.0051 8.17809C12.2565 8.1778 11.5385 8.47489 11.009 9.004L4.00199 16.001C3.73935 16.2634 3.53097 16.5751 3.38875 16.918C3.24654 17.261 3.17327 17.6286 3.17313 17.9999C3.17299 18.3712 3.24598 18.7389 3.38794 19.082C3.5299 19.4251 3.73805 19.7369 4.00049 19.9995C4.26294 20.2621 4.57455 20.4705 4.91753 20.6127C5.26051 20.755 5.62814 20.8282 5.99943 20.8284C6.37073 20.8285 6.73841 20.7555 7.0815 20.6136C7.42458 20.4716 7.73635 20.2624 7.99899 20ZM11 11L13 13L14 12C14.1313 11.8687 14.2355 11.7128 14.3066 11.5412C14.3776 11.3696 14.4142 11.1857 14.4142 11C14.4142 10.8143 14.3776 10.6304 14.3066 10.4588C14.2355 10.2872 14.1313 10.1313 14 10C13.8687 9.86868 13.7128 9.76451 13.5412 9.69344C13.3696 9.62237 13.1857 9.58579 13 9.58579C12.8143 9.58579 12.6304 9.62237 12.4588 9.69344C12.2872 9.76451 12.1313 9.86868 12 10L11 11Z" fill="white"/>
+                    <path d="M6.75901 4.897C6.82501 4.65 7.17501 4.65 7.24101 4.897L7.60001 6.225C7.61142 6.26715 7.63367 6.30558 7.66455 6.33646C7.69543 6.36734 7.73386 6.38959 7.77601 6.401L9.10401 6.759C9.35101 6.825 9.35101 7.175 9.10401 7.241L7.77501 7.6C7.73286 7.61141 7.69443 7.63366 7.66355 7.66454C7.63267 7.69542 7.61042 7.73385 7.59901 7.776L7.24001 9.103C7.17401 9.35 6.82401 9.35 6.75801 9.103L6.40001 7.775C6.3886 7.73285 6.36635 7.69442 6.33547 7.66354C6.30459 7.63266 6.26616 7.61041 6.22401 7.599L4.89501 7.241C4.64901 7.175 4.64901 6.825 4.89501 6.759L6.22501 6.4C6.26716 6.38859 6.30559 6.36634 6.33647 6.33546C6.36735 6.30458 6.3896 6.26615 6.40101 6.224L6.75901 4.897ZM16.759 3.897C16.825 3.65 17.175 3.65 17.241 3.897L17.599 5.225C17.6104 5.26715 17.6327 5.30558 17.6636 5.33646C17.6944 5.36734 17.7329 5.38959 17.775 5.401L19.103 5.759C19.35 5.825 19.35 6.175 19.103 6.241L17.775 6.599C17.7329 6.61041 17.6944 6.63266 17.6636 6.66354C17.6327 6.69442 17.6104 6.73285 17.599 6.775L17.241 8.103C17.175 8.35 16.825 8.35 16.759 8.103L16.401 6.775C16.3896 6.73285 16.3673 6.69442 16.3365 6.66354C16.3056 6.63266 16.2672 6.61041 16.225 6.599L14.897 6.241C14.65 6.175 14.65 5.825 14.897 5.759L16.225 5.401C16.2672 5.38959 16.3056 5.36734 16.3365 5.33646C16.3673 5.30558 16.3896 5.26715 16.401 5.225L16.759 3.897Z" fill="white"/>
+                  </svg>
+                  <span class="dsv-btn-count">${group.errors.length}</span>
                 </button>
               </div>
             `;
@@ -6341,8 +6546,39 @@ ${designSystemContext}
           if (totalIssuesEl) totalIssuesEl.textContent = dsvCurrentReport.totalIssues;
         }
         
-        // Показываем результаты
-        alert(`Исправлено: ${message.results.fixed}\nОшибок: ${message.results.failed}\nВсего: ${message.results.total}`);
+        // Показываем результаты через inline-статус и figma.notify()
+        const fixStatus = document.getElementById('dsv-fix-status');
+        const fixed = message.results.fixed;
+        const failed = message.results.failed;
+        const total = message.results.total;
+        
+        if (fixStatus) {
+          let statusClass = 'success';
+          let statusText = '';
+          
+          if (failed === 0 && fixed > 0) {
+            statusClass = 'success';
+            statusText = `✓ Исправлено ${fixed} из ${total}`;
+            showFigmaNotify(`✓ Исправлено ${fixed} проблем`);
+          } else if (fixed === 0 && failed > 0) {
+            statusClass = 'error';
+            statusText = `✗ Не удалось исправить (${failed} ошибок)`;
+            showFigmaNotify(`Не удалось исправить ${failed} проблем`, true);
+          } else if (fixed > 0 && failed > 0) {
+            statusClass = 'partial';
+            statusText = `Исправлено ${fixed}, не удалось ${failed}`;
+            showFigmaNotify(`Исправлено ${fixed}, не удалось ${failed}`);
+          }
+          
+          fixStatus.className = 'dsv-fix-status ' + statusClass;
+          fixStatus.textContent = statusText;
+          fixStatus.style.display = 'block';
+          
+          // Автоскрытие статуса через 5 секунд
+          setTimeout(() => {
+            fixStatus.style.display = 'none';
+          }, 5000);
+        }
         
         // Если все ошибки исправлены - показываем success
         if (dsvCurrentReport && dsvCurrentReport.issues.length === 0) {
