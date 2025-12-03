@@ -1,0 +1,43 @@
+{
+  "name": "Orbita DS ✦ Tools (Dev)",
+  "id": "1537434937937210613",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://yandex-team.ru",
+      "https://cdn.jsdelivr.net",
+      "https://api.eliza.yandex.net",
+      "https://events.statsigapi.net"
+    ]
+  },
+  "menu": [
+    {
+      "name": "Icons Checker",
+      "command": "check-icons"
+    },
+    {
+      "name": "Design System Validator",
+      "command": "design-system-validator"
+    },
+    { "separator": true },
+    {
+      "name": "Node Inspector",
+      "command": "node-id-inspector"
+    },
+    {
+      "name": "SVG Export icons",
+      "command": "svg-export"
+    },
+    {
+      "name": "Page Text Export",
+      "command": "get-page-text"
+    },
+    {
+      "name": "Component Props Export",
+      "command": "export-component-properties"
+    }
+  ]
+}
