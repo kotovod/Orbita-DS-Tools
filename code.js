@@ -473,16 +473,31 @@ function collectVariablesFromGroup(group, groupName, allVariables, path = '') {
 
 /**
  * Извлекает числовые значения из ноды (Token Guard версия)
- * Проверяет: padding, gap, cornerRadius, strokeWeight
+ * Проверяет: padding, gap, cornerRadius, strokeWeight, fills, strokes
+ * @param {SceneNode} node - Нода для проверки
+ * @param {Object} options - Опции проверки
  */
-function extractNumericValues(node) {
+function extractNumericValues(node, options = {}) {
   const values = [];
   const boundVariables = node.boundVariables || {};
+  
+  // Настройки проверяемых свойств (по умолчанию всё включено кроме effects, opacity, size)
+  const props = options.propertiesToCheck || {
+    fills: true,
+    strokes: true,
+    cornerRadius: true,
+    spacing: true,
+    padding: true,
+    effects: false,
+    opacity: false,
+    size: false
+  };
   
   // Проверяем автолейаут (для padding и gap)
   if (node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE') {
     if (node.layoutMode !== 'NONE') {
-      // Padding - проверяем с группировкой
+      // Padding - проверяем с группировкой (если включено в настройках)
+      if (props.padding !== false) {
       const paddingLeft = node.paddingLeft;
       const paddingRight = node.paddingRight;
       const paddingTop = node.paddingTop;
@@ -570,8 +585,10 @@ function extractNumericValues(node) {
           });
         }
       }
+      } // Конец проверки padding
       
-      // Gap (itemSpacing)
+      // Gap (itemSpacing) - если включено в настройках
+      if (props.spacing !== false) {
       if (typeof node.itemSpacing === 'number') {
         values.push({
           type: 'itemSpacing',
@@ -581,12 +598,13 @@ function extractNumericValues(node) {
           hasVariable: !!boundVariables['itemSpacing'],
           valueType: 'numeric'
         });
+        }
       }
     }
   }
   
-  // Corner radius
-  if ('cornerRadius' in node) {
+  // Corner radius - если включено в настройках
+  if (props.cornerRadius !== false && 'cornerRadius' in node) {
     const corners = ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius'];
     const isMixedRadius = node.cornerRadius === figma.mixed;
     const hasIndependentCorners = corners.some(corner => boundVariables[corner] !== undefined);
@@ -621,8 +639,8 @@ function extractNumericValues(node) {
     }
   }
   
-  // Stroke weight
-  if ('strokeWeight' in node && typeof node.strokeWeight === 'number') {
+  // Stroke weight - если проверка strokes включена
+  if (props.strokes !== false && 'strokeWeight' in node && typeof node.strokeWeight === 'number') {
     const hasVisibleStrokes = node.strokes && node.strokes.length > 0;
     if (hasVisibleStrokes) {
       values.push({
@@ -636,7 +654,8 @@ function extractNumericValues(node) {
     }
   }
   
-  // Проверяем цвета (fills и strokes)
+  // Проверяем цвета (fills и strokes) - если включено в настройках
+  if (props.fills !== false) {
   console.log(`🎨 DSV: Проверяем fills для "${node.name}":`, {
     hasFills: 'fills' in node,
     fillsLength: node.fills ? node.fills.length : 0
@@ -681,7 +700,10 @@ function extractNumericValues(node) {
       }
     });
   }
+  } // Конец проверки fills
   
+  // Проверяем strokes цвета - если включено в настройках
+  if (props.strokes !== false) {
   console.log(`🖌️ DSV: Проверяем strokes для "${node.name}":`, {
     hasStrokes: 'strokes' in node,
     strokesLength: node.strokes ? node.strokes.length : 0
@@ -726,6 +748,7 @@ function extractNumericValues(node) {
       }
     });
   }
+  } // Конец проверки strokes
   
   return values;
 }
@@ -749,15 +772,17 @@ function traverseNode(node, callback, skipSelf = false) {
 /**
  * Проверка числовых переменных (Token Guard версия)
  * Возвращает массив ошибок в упрощенном формате
+ * @param {Object} options - Опции проверки (включая propertiesToCheck)
  */
-async function checkNumericVariables() {
+async function checkNumericVariables(options = {}) {
   try {
     console.log('🔍 DSV: Начинаем проверку числовых переменных (Token Guard версия)...');
+    console.log('📋 DSV: Настройки проверки:', options.propertiesToCheck || 'по умолчанию');
     
     const selection = figma.currentPage.selection;
     
     if (selection.length === 0) {
-      throw new Error('Выберите хотя бы один элемент для проверки!');
+      throw new Error('Выберите хотя бы один элемент для проверки. Перед повторной проверкой перезапустите плагин');
     }
     
     console.log(`✓ Выбрано ${selection.length} элементов`);
@@ -794,7 +819,7 @@ async function checkNumericVariables() {
       nodesChecked++;
       
       try {
-        const values = extractNumericValues(node);
+        const values = extractNumericValues(node, options);
         
         // Проверяем каждое значение
         for (const item of values) {
@@ -977,6 +1002,7 @@ async function fixAllDSVErrors(errors) {
   
   let fixedCount = 0;
   let failedCount = 0;
+  const fixedIds = [];
   
   for (const error of errors) {
     console.log(`\n🔄 DSV: Обрабатываем ошибку:`, {
@@ -993,6 +1019,7 @@ async function fixAllDSVErrors(errors) {
       
       if (result && result.success) {
         fixedCount++;
+        fixedIds.push(error.nodeId + ':' + error.property);
       } else {
         failedCount++;
       }
@@ -1005,7 +1032,7 @@ async function fixAllDSVErrors(errors) {
   
   console.log(`✅ DSV: Исправление завершено: ${fixedCount} успешно, ${failedCount} ошибок`);
   
-  return { fixedCount, failedCount };
+  return { fixedCount, failedCount, fixedIds };
 }
 
 // Лейблы для UI (из Token Guard)
@@ -2370,7 +2397,7 @@ if (figma.command === 'node-id-inspector') {
   }, 100);
 } else if (figma.command === 'design-system-validator') {
   // Для Design System Validator используем полный UI
-  figma.showUI(__html__, { width: 450, height: 600 });
+  figma.showUI(__html__, { width: 400, height: 480 });
   
   // Загружаем сохранённые токены из clientStorage
   (async () => {
@@ -2800,7 +2827,11 @@ figma.ui.onmessage = async function(msg) {
         console.log('DSV: Запуск упрощенной проверки (Token Guard версия)');
         console.log('============================================\n');
         
-        const result = await checkNumericVariables();
+        // Передаём настройки проверяемых свойств из UI
+        const options = msg.options || {};
+        console.log('DSV: Опции проверки:', options);
+        
+        const result = await checkNumericVariables(options);
         
         console.log('\n\n✅ ============================================');
         console.log(`DSV: Проверка завершена!`);
@@ -2845,30 +2876,22 @@ figma.ui.onmessage = async function(msg) {
         console.log('DSV: Исправление ошибок ноды:', msg.errors.length);
         const result = await fixAllDSVErrors(msg.errors);
         
+        // Получаем nodeId из первой ошибки
+        const nodeId = msg.errors.length > 0 ? msg.errors[0].nodeId : null;
+        
         figma.ui.postMessage({
-          type: 'dsv-fix-complete',
-          result: result
+          type: 'dsv-fix-node-complete',
+          nodeId: nodeId,
+          result: {
+            fixed: result.fixedCount,
+            failed: result.failedCount,
+            fixedIds: result.fixedIds
+          }
         });
         
-        // Автоматически перезапускаем проверку
-        setTimeout(async () => {
-          try {
-            const checkResult = await checkNumericVariables();
-            figma.ui.postMessage({
-              type: 'dsv-validation-complete',
-              data: {
-                checked: checkResult.checked,
-                errors: checkResult.errors,
-                stats: {
-                  nodesChecked: checkResult.checked,
-                  errorsFound: checkResult.errors.length
-                }
-              }
-        });
-      } catch (error) {
-            console.error('DSV: Ошибка при повторной проверке:', error);
-          }
-        }, 300);
+        if (result.fixedCount > 0) {
+          figma.notify(`✓ Исправлено ${result.fixedCount} ошибок`);
+        }
         
       } catch (error) {
         console.error('DSV: Ошибка при исправлении:', error);
@@ -2974,15 +2997,17 @@ figma.ui.onmessage = async function(msg) {
       }
     } else if (msg.type === 'dsv-get-tokens-status') {
       // Design System Validator - запрос статуса токенов
-      const hasTokens = savedTokensFromJson !== null && Array.isArray(savedTokensFromJson);
-      const count = hasTokens ? savedTokensFromJson.length : 0;
+      const hasTokens = savedTokensFromJson !== null && savedTokensFromJson.variables;
+      const count = hasTokens ? (savedTokensFromJson.count || 0) : 0;
+      const savedAt = hasTokens && savedTokensFromJson.timestamp ? savedTokensFromJson.timestamp : null;
       
-      console.log('DSV: Запрос статуса токенов, есть токены:', hasTokens, 'количество:', count);
+      console.log('DSV: Запрос статуса токенов, есть токены:', hasTokens, 'количество:', count, 'savedAt:', savedAt);
       
       figma.ui.postMessage({
         type: 'dsv-tokens-status',
         hasTokens: hasTokens,
-        count: count
+        count: count,
+        savedAt: savedAt
       });
     } else if (msg.type === 'dsv-bind-token') {
       // Design System Validator - привязка токена к свойству
@@ -3047,6 +3072,28 @@ figma.ui.onmessage = async function(msg) {
         });
         figma.notify(`✗ Ошибка импорта: ${error.message}`, { error: true });
       }
+    } else if (msg.type === 'dsv-clear-tokens') {
+      // Design System Validator - очистка сохранённых токенов
+      try {
+        console.log('🗑️ DSV: Очистка сохранённых токенов...');
+        
+        // Очищаем clientStorage
+        await figma.clientStorage.deleteAsync('dsv-tokens');
+        
+        // Очищаем память плагина
+        savedTokensFromJson = null;
+        
+        figma.ui.postMessage({
+          type: 'dsv-tokens-cleared'
+        });
+        
+        figma.notify('✓ Токены очищены');
+        console.log('✅ DSV: Токены успешно очищены');
+        
+      } catch (error) {
+        console.error('❌ DSV: Ошибка очистки токенов:', error);
+        figma.notify(`✗ Ошибка очистки: ${error.message}`, { error: true });
+      }
     } else if (msg.type === 'dsv-fix-issue') {
       // Design System Validator - автоисправление одной проблемы
       try {
@@ -3058,7 +3105,8 @@ figma.ui.onmessage = async function(msg) {
         if (success) {
           figma.ui.postMessage({
             type: 'dsv-fix-success',
-            issueId: issue.nodeId
+            issueId: issue.nodeId,
+            propertyKey: issue.property
           });
           figma.notify(`✓ Токен применён к "${issue.nodeName}"`);
           console.log(`✅ DSV: Проблема исправлена`);
@@ -3091,14 +3139,15 @@ figma.ui.onmessage = async function(msg) {
         figma.ui.postMessage({
           type: 'dsv-fix-all-complete',
           results: {
-            fixed: result.successCount,
+            fixed: result.fixedCount,
             failed: result.failedCount,
-            total: issues.length
+            total: issues.length,
+            fixedIds: result.fixedIds
           }
         });
         
-        figma.notify(`✓ Исправлено: ${results.fixed}, Ошибок: ${results.failed}`);
-        console.log(`✅ DSV: Автоисправление завершено. Исправлено: ${results.fixed}, Ошибок: ${results.failed}`);
+        figma.notify(`✓ Исправлено: ${result.fixedCount}, Ошибок: ${result.failedCount}`);
+        console.log(`✅ DSV: Автоисправление завершено. Исправлено: ${result.fixedCount}, Ошибок: ${result.failedCount}`);
         
       } catch (error) {
         console.error('❌ DSV: Ошибка массового автоисправления:', error);

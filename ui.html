@@ -70,11 +70,11 @@
       color: #FFFFFF;
       font-size: 14px;
       line-height: 1.5;
-      overflow-y: auto;
-      overflow-x: hidden;
-      max-height: 100vh;
-      min-height: 100vh;
+      overflow: hidden;
+      height: 100vh;
       width: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
     html {
@@ -202,15 +202,24 @@
     }
     
     .header-container {
-      position: sticky;
-      top: 0;
       background-color: #34343C;
       padding: 8px 16px 24px 16px;
       z-index: 10;
+      flex-shrink: 0;
     }
     
     .content-container {
       padding: 0 16px;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+    }
+    
+    .design-system-validator-mode .content-container {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
     
     .badge {
@@ -241,7 +250,7 @@
       font-weight: 500;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin-bottom: 16px;
+      /* margin-bottom: 16px; */
       position: relative;
       overflow: hidden;
     }
@@ -563,6 +572,7 @@
       border-radius: 12px;
       padding: 12px;
       margin-bottom: 16px;
+      margin-top: 16px;
       display: none;
       transform-origin: top center;
       transition: all 0.3s ease-out;
@@ -715,7 +725,7 @@
       color: white;
       border: none;
       border-radius: 12px;
-      padding: 8px 16px;
+      padding: 12px 16px;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
@@ -736,14 +746,14 @@
     
     .unified-button-primary {
       width: 100%;
-      margin-bottom: 16px;
+      margin-bottom: 0px;
     }
     
     .unified-button-secondary {
       background-color: #44444C;
       font-size: 12px;
       padding: 12px 8px;
-      margin: 0 4px 16px 0;
+      margin: 0 0 16px 0;
     }
     
     .unified-button-secondary:hover {
@@ -827,6 +837,20 @@
     }
     
     .unified-card:hover {
+      background-color: #4A4A54;
+    }
+    
+    /* Карточка проблемы DSV */
+    .unified-issue-card {
+      background-color: #44444C;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    
+    .unified-issue-card:hover {
       background-color: #4A4A54;
     }
     
@@ -1091,7 +1115,7 @@
     
     .unified-section-title {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 400;
       color: #FFFFFF;
       margin-bottom: 12px;
     }
@@ -1137,8 +1161,12 @@
     }
     
     .design-system-validator-mode .design-system-validator-section {
-      display: block;
+      display: flex;
+      flex-direction: column;
       margin-bottom: 0;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
     
     /* Кнопка настроек */
@@ -1147,7 +1175,169 @@
     }
     
     .settings-button:active {
-      transform: scale(0.95);
+      background-color: #3A3A42;
+    }
+    
+    /* DSV Кнопка настроек — квадратная иконочная */
+    .dsv-settings-btn {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #44444C;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .dsv-settings-btn:hover {
+      background-color: #55555C;
+    }
+    
+    .dsv-settings-btn:active {
+      background-color: #3A3A42;
+    }
+    
+    .dsv-settings-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .dsv-settings-btn svg path {
+      fill: #AAAAAA;
+      transition: fill 0.2s ease;
+    }
+    
+    .dsv-settings-btn:hover svg path {
+      fill: #FFFFFF;
+    }
+    
+    /* DSV Панель настроек */
+    .dsv-settings-panel {
+      background-color: #44444C;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 32px;
+      margin-top: 16px;
+      transform-origin: center top;
+      transition: all 0.3s ease-out;
+      height: 344px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    /* DSV Заголовок секции проблем */
+    .dsv-issues-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    /* DSV Счётчик проблем в заголовке */
+    .dsv-issues-count {
+      color: #Fff;
+      font-weight: 600;
+      margin-left: 4px;
+      background-color: #F44336;
+      padding: 4px 8px;
+      font-size: 10px;
+      border-radius: 16px;
+    }
+    
+    /* DSV Список проблем */
+    .dsv-issues-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    /* DSV Индикатор загрузки */
+    .dsv-loading-text {
+      margin-bottom: 8px;
+    }
+    
+    .dsv-progress-text {
+      font-size: 11px;
+    }
+    
+    /* DSV Карточка проблемы - контент */
+    .dsv-issue-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .dsv-issue-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .dsv-issue-node-name {
+      font-size: 12px;
+      color: #FFFFFF;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .dsv-issue-error {
+      font-size: 10px;
+      color: #AAAAAA;
+      margin-top: 2px;
+    }
+    
+    .dsv-issue-token {
+      color: #4CAF50;
+    }
+    
+    /* DSV Кнопка исправить (в карточке) */
+    .dsv-fix-node-btn {
+      background-color: #5c5c66;
+      font-size: 12px;
+      padding: 8px 12px;
+      margin-left: 8px;
+      flex-shrink: 0;
+      width: auto;
+      white-space: nowrap;
+      border-radius: 12px;
+    }
+    
+    .dsv-fix-node-btn:hover {
+      background-color: #E55520;
+      box-shadow: none;
+    }
+    
+    /* DSV Кнопка исправить всё */
+    .dsv-fix-all-btn {
+      background-color: #505059;
+      border-radius: 12px;
+      font-size: 12px;
+      padding: 8px 12px;
+    }
+    
+    .dsv-fix-all-btn:hover {
+      background-color: #E55520;
+      box-shadow: none;
+    }
+    
+    /* DSV все кнопки — без box-shadow и transform при hover/active */
+    .design-system-validator-section .unified-button:hover {
+      box-shadow: none;
+      transform: none;
+    }
+    
+    .design-system-validator-section .unified-button:active {
+      box-shadow: none;
+      transform: none;
+    }
+    
+    /* DSV Счётчик ошибок в кнопке */
+    .dsv-btn-count {
+      opacity: 0.5;
+      margin-left: 4px;
     }
     
     /* Кнопка назад */
@@ -2222,7 +2412,7 @@
         <button id="dsv-validate-button-main" class="unified-button unified-button-primary" style="flex-grow: 1;">
           Проверить
         </button>
-        <button id="dsv-settings-button" class="settings-button" title="Настройки валидатора">
+        <button id="dsv-settings-button" class="dsv-settings-btn" title="Настройки валидатора">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M5.75195 8.00196C5.90055 8.00417 6.04242 8.00868 6.17285 8.01758C6.45841 8.03707 6.79738 8.0831 7.14844 8.22852C7.88321 8.53299 8.46701 9.11679 8.77148 9.85157C8.9169 10.2026 8.96294 10.5416 8.98242 10.8272C8.99136 10.9582 8.99584 11.1007 8.99805 11.25H16V12.75H8.99805C8.99584 12.8993 8.99136 13.0419 8.98242 13.1729C8.96294 13.4584 8.9169 13.7974 8.77148 14.1484C8.46701 14.8832 7.88321 15.467 7.14844 15.7715C6.79738 15.9169 6.45841 15.9629 6.17285 15.9824C5.91182 16.0002 5.60499 16 5.29004 16H4.70996C4.39501 16 4.08818 16.0002 3.82715 15.9824C3.54159 15.9629 3.20263 15.9169 2.85156 15.7715C2.11679 15.467 1.53299 14.8832 1.22852 14.1484C1.0831 13.7974 1.03706 13.4584 1.01758 13.1729L1.00195 12.75H0V11.25H1.00195C1.00416 11.1007 1.00864 10.9582 1.01758 10.8272C1.03706 10.5416 1.0831 10.2026 1.22852 9.85157C1.53299 9.11679 2.11679 8.53299 2.85156 8.22852C3.20263 8.0831 3.54159 8.03707 3.82715 8.01758C4.08818 7.99977 4.39501 7.99997 4.70996 8H5.29004L5.75195 8.00196ZM4.75 9.5C4.13845 9.5 3.79431 9.49968 3.5332 9.57618C3.49591 9.5871 3.46023 9.59999 3.42578 9.61426C3.10427 9.74749 2.84061 9.98786 2.67773 10.292C2.65452 10.3354 2.63325 10.38 2.61426 10.4258C2.53126 10.6262 2.50814 10.8657 2.50195 11.25C2.49963 11.394 2.5 11.5588 2.5 11.749V12.251C2.5 12.4412 2.49963 12.606 2.50195 12.75C2.50814 13.1343 2.53126 13.3738 2.61426 13.5742C2.76649 13.9416 3.05839 14.2335 3.42578 14.3857C3.46023 14.4 3.49592 14.4129 3.5332 14.4238C3.79431 14.5003 4.13845 14.5 4.75 14.5H5.25C5.94891 14.5 6.29856 14.4999 6.57422 14.3857C6.9416 14.2335 7.23351 13.9416 7.38574 13.5742C7.46874 13.3738 7.49186 13.1343 7.49805 12.75C7.50037 12.6057 7.5 12.4409 7.5 12.25V11.75C7.5 11.5592 7.50037 11.3943 7.49805 11.25C7.49263 10.9138 7.47409 10.6882 7.41406 10.5029C7.40551 10.4765 7.39608 10.4508 7.38574 10.4258C7.25252 10.1043 7.01214 9.84061 6.70801 9.67774C6.66465 9.65452 6.62005 9.63325 6.57422 9.61426C6.38037 9.53397 6.14982 9.51001 5.78711 9.50293L5.37695 9.5H4.75ZM11.752 0.00195683C11.9005 0.00417449 12.0424 0.00868269 12.1729 0.0175818C12.4584 0.0370653 12.7974 0.0831038 13.1484 0.228519C13.8832 0.532991 14.467 1.11679 14.7715 1.85157C14.9169 2.20263 14.9629 2.5416 14.9824 2.82715C14.9914 2.95815 14.9958 3.1007 14.998 3.25H16V4.75H14.998C14.9958 4.89931 14.9914 5.04185 14.9824 5.17286C14.9629 5.45841 14.9169 5.79738 14.7715 6.14844C14.467 6.88322 13.8832 7.46702 13.1484 7.77149C12.7974 7.9169 12.4584 7.96294 12.1729 7.98243C11.9118 8.00024 11.605 8.00004 11.29 8H10.71C10.395 8.00004 10.0882 8.00024 9.82715 7.98243C9.54159 7.96294 9.20262 7.9169 8.85156 7.77149C8.11679 7.46701 7.53299 6.88322 7.22852 6.14844C7.0831 5.79738 7.03706 5.45841 7.01758 5.17286L7.00195 4.75H0V3.25H7.00195C7.00416 3.1007 7.00864 2.95815 7.01758 2.82715C7.03706 2.54159 7.0831 2.20263 7.22852 1.85157C7.53299 1.11679 8.11679 0.532993 8.85156 0.228519C9.20262 0.0831048 9.54159 0.0370655 9.82715 0.0175818C10.0882 -0.000228366 10.395 -2.76315e-05 10.71 3.70663e-06H11.29L11.752 0.00195683ZM10.75 1.5C10.0511 1.5 9.70144 1.50008 9.42578 1.61426C9.0584 1.7665 8.76649 2.0584 8.61426 2.42578C8.53126 2.62617 8.50814 2.86574 8.50195 3.25C8.49963 3.39435 8.5 3.55915 8.5 3.75V4.25C8.5 4.44085 8.49963 4.60566 8.50195 4.75C8.50737 5.08624 8.52591 5.31176 8.58594 5.49707C8.59449 5.52346 8.60391 5.54925 8.61426 5.57422C8.74748 5.89574 8.98785 6.15939 9.29199 6.32227C9.33535 6.34548 9.37995 6.36675 9.42578 6.38575C9.68421 6.49279 10.0078 6.49959 10.623 6.5H11.25C11.8615 6.5 12.2057 6.50032 12.4668 6.42383C12.5041 6.41291 12.5398 6.40001 12.5742 6.38575C12.8957 6.25252 13.1594 6.01215 13.3223 5.70801C13.3455 5.66465 13.3668 5.62005 13.3857 5.57422C13.4687 5.37384 13.4919 5.13427 13.498 4.75C13.5004 4.60601 13.5 4.44123 13.5 4.25098V3.74903C13.5 3.55877 13.5004 3.394 13.498 3.25C13.4919 2.86574 13.4687 2.62617 13.3857 2.42578C13.2335 2.0584 12.9416 1.7665 12.5742 1.61426C12.5398 1.59999 12.5041 1.5871 12.4668 1.57618C12.2709 1.51879 12.0283 1.50456 11.6611 1.50098L11.25 1.5H10.75Z" fill="white"/>
           </svg>
@@ -2230,28 +2420,26 @@
       </div>
 
       <!-- Панель настроек (скрыта по умолчанию) -->
-      <div id="dsv-settings-panel" style="display: none; margin-bottom: 16px;">
+      <div id="dsv-settings-panel" class="dsv-settings-panel" style="display: none;">
       
       <!-- Управление токенами -->
-      <div style="margin-bottom: 16px; padding: 16px; background: #2A2A32; border-radius: 8px; border: 1px solid #505059;">
-        <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-bottom: 12px;">
-          📦 Управление токенами
-      </div>
+      <div style="margin-bottom: 8px; padding: 16px; background: #2A2A32; border-radius: 8px; border: 1px solid #505059;">
+        <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; ">
+          Управление токенами
+          <div class="tooltip-icon">?
+            <div class="tooltip" style="width: 220px; font-weight: normal;">Запустите плагин в библиотеке переменных Foundation и сделайте импорт токенов сюда. Плагин сохранит их в себе</div>
+          </div>
+        </div>
 
         <!-- Статус токенов -->
         <div style="margin-bottom: 12px; padding: 10px; background: #1E1E26; border-radius: 6px;">
-          <div id="dsv-tokens-status-text" style="font-size: 11px; color: #AAAAAA;">Токены не загружены</div>
+          <div id="dsv-tokens-status-text" style="font-size: 10px; color: #AAAAAA; display: inline-block;">Токены не загружены</div>
+          <div id="dsv-tokens-load-time" style="font-size: 10px; color: #888888; margin-left: 8px; display: none;"></div>
         </div>
 
-        <!-- Кнопки управления -->
-        <div style="margin-bottom: 12px;">
-          <button id="dsv-import-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px;">
-            📥 Импорт токенов из файла
-              </button>
-      </div>
 
-        <!-- Textarea с JSON токенов -->
-        <details style="margin-top: 12px;">
+        <!-- Textarea с JSON токенов (скрыт по умолчанию) -->
+        <details id="dsv-tokens-json-details" style="display: none;">
           <summary style="font-size: 11px; color: #FFFFFF; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px;">
             <span style="color: #F86025;">▸</span> Просмотр JSON токенов
           </summary>
@@ -2264,136 +2452,90 @@
                              font-family: 'SF Mono', Monaco, monospace; resize: vertical;"
                       placeholder="JSON токенов будет здесь после импорта..."></textarea>
             <button id="dsv-copy-json-button" class="unified-button unified-button-tertiary" style="width: 100%; margin-top: 8px; font-size: 11px; display: none;">
-              📋 Копировать JSON
-              </button>
-              </div>
+              Копировать JSON
+            </button>
+          </div>
         </details>
 
-        <div style="font-size: 10px; color: #AAAAAA; margin-top: 12px; line-height: 1.4;">
-          <strong style="color: #FFFFFF;">Как использовать:</strong><br>
-          1. Откройте файл библиотеки с токенами<br>
-          2. Нажмите "📥 Импорт" — токены сохранятся в плагин<br>
-          3. Токены будут доступны во <strong style="color: #FFFFFF;">всех файлах Figma</strong> для автоисправления<br>
-          <br>
-          <strong style="color: #F86025;">Альтернативный способ:</strong> Экспортируйте JSON и загрузите в других проектах через "📂 Загрузить JSON файл"
-              </div>
-              </div>
-      
-      <!-- Заголовок с описанием -->
-      <div class="unified-text-small unified-text-muted unified-mb-16" style="line-height: 1.5;">
-        Проверка использования Figma Variables (дизайн-токенов) в компонентах
-            </div>
+        <!-- Кнопки управления (взаимоисключающие) -->
+        <div style="margin-top: 16px;">
+          <button id="dsv-import-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
+            Импортировать из библиотеки
+          </button>
+          <button id="dsv-clear-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important; display: none;">
+            Сбросить токены
+          </button>
+        </div>
 
-      <!-- Выбор режима проверки -->
-      <div class="unified-mb-16">
-        <label class="unified-label">Режим проверки:</label>
-        <div class="unified-button-group">
-          <button id="dsv-mode-local" class="dsv-mode-button unified-button unified-button-secondary" data-mode="local" style="flex: 1;">Local</button>
-          <button id="dsv-mode-remote" class="dsv-mode-button unified-button unified-button-secondary" data-mode="remote" style="flex: 1;">Remote</button>
-          <button id="dsv-mode-all" class="dsv-mode-button unified-button unified-button-primary" data-mode="all" style="flex: 1;">All</button>
-          </div>
-      </div>
-
-        <!-- Подсказка для пользователя -->
-        <div style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 11px; line-height: 1.5; color: #AAAAAA; border-left: 3px solid #F86025;">
-          <strong style="color: #FFFFFF;">Совет:</strong> Если ничего не выделено — будет проверена вся текущая страница. Выделите объекты для проверки конкретных элементов.
-      </div>
+      </div><!-- Конец управления токенами -->
 
       <!-- Настройки проверки -->
       <div style="margin-bottom: 16px;">
-        <label style="font-size: 12px; color: #FFFFFF; display: block; margin-bottom: 8px; font-weight: 600;">Настройки:</label>
-        
         <!-- Общие настройки -->
         <div style="background: #2A2A32; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
-          <label style="display: flex; align-items: center; cursor: pointer; font-size: 12px; color: #FFFFFF; margin-bottom: 8px;">
-            <input type="checkbox" id="dsv-skip-instances" style="margin-right: 8px; cursor: pointer;">
-            <span>Пропускать вложенные Instance компоненты</span>
-          </label>
-          <div style="font-size: 10px; color: #AAAAAA; margin-top: 4px; margin-left: 24px; margin-bottom: 12px;">
-            Если включено, Instance внутри компонентов не будут проверяться на использование токенов
+          <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-bottom: 12px;">Настройки</div>
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-skip-instances">
+            <label for="dsv-skip-instances">Пропускать Instance</label>
+            <div class="tooltip-icon">?
+              <div class="tooltip">Instance внутри компонентов не будут проверяться на использование токенов</div>
+            </div>
           </div>
-          
-          <label style="display: flex; align-items: center; cursor: pointer; font-size: 12px; color: #FFFFFF;">
-            <input type="checkbox" id="dsv-filter-orb-prefix" checked style="margin-right: 8px; cursor: pointer;">
-            <span>Проверять только компоненты с префиксом "orb-"</span>
-          </label>
-          <div style="font-size: 10px; color: #AAAAAA; margin-top: 4px; margin-left: 24px;">
-            Если включено, будут проверяться только компоненты нашей дизайн-системы (с префиксом "orb-"), нативные и сторонние компоненты будут пропущены
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-filter-orb-prefix" checked>
+            <label for="dsv-filter-orb-prefix">Только orb-* компоненты</label>
+            <div class="tooltip-icon">?
+              <div class="tooltip">Будут проверяться только компоненты дизайн-системы (с префиксом "orb-"), нативные и сторонние компоненты будут пропущены</div>
+            </div>
           </div>
         </div>
 
         <!-- Настройки проверяемых свойств -->
-        <details style="background: #2A2A32; border-radius: 8px; padding: 12px;">
-          <summary style="font-size: 12px; color: #FFFFFF; font-weight: 600; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
-            <span style="color: #F86025;">▸</span> Проверяемые свойства
-          </summary>
-          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #505059;">
-            <div style="font-size: 10px; color: #AAAAAA; margin-bottom: 12px;">
-              Выберите какие свойства проверять на наличие токенов:
-            </div>
-            
-            <!-- Цвета -->
-            <div style="margin-bottom: 12px;">
-              <div style="font-size: 11px; color: #FFFFFF; font-weight: 600; margin-bottom: 6px;">🎨 Цвета</div>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF; margin-bottom: 4px;">
-                <input type="checkbox" id="dsv-check-fills" checked style="margin-right: 8px; cursor: pointer;">
-                <span>Fill (Заливка)</span>
-              </label>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF;">
-                <input type="checkbox" id="dsv-check-strokes" checked style="margin-right: 8px; cursor: pointer;">
-                <span>Stroke (Обводка)</span>
-              </label>
-            </div>
-
-            <!-- Размеры и отступы -->
-            <div style="margin-bottom: 12px;">
-              <div style="font-size: 11px; color: #FFFFFF; font-weight: 600; margin-bottom: 6px;">📏 Размеры и отступы</div>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF; margin-bottom: 4px;">
-                <input type="checkbox" id="dsv-check-corner-radius" checked style="margin-right: 8px; cursor: pointer;">
-                <span>Corner Radius (Радиус скругления)</span>
-              </label>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF; margin-bottom: 4px;">
-                <input type="checkbox" id="dsv-check-spacing" checked style="margin-right: 8px; cursor: pointer;">
-                <span>Gap / Item Spacing (Отступы между элементами)</span>
-              </label>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF;">
-                <input type="checkbox" id="dsv-check-padding" checked style="margin-right: 8px; cursor: pointer;">
-                <span>Padding (Внутренние отступы)</span>
-              </label>
-            </div>
-
-            <!-- Эффекты и прочее -->
-            <div>
-              <div style="font-size: 11px; color: #FFFFFF; font-weight: 600; margin-bottom: 6px;">✨ Эффекты и прочее</div>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF; margin-bottom: 4px;">
-                <input type="checkbox" id="dsv-check-effects" style="margin-right: 8px; cursor: pointer;">
-                <span>Effects (Эффекты: тени, размытие)</span>
-              </label>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF; margin-bottom: 4px;">
-                <input type="checkbox" id="dsv-check-opacity" style="margin-right: 8px; cursor: pointer;">
-                <span>Opacity (Прозрачность)</span>
-              </label>
-              <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #FFFFFF;">
-                <input type="checkbox" id="dsv-check-size" style="margin-right: 8px; cursor: pointer;">
-                <span>Width/Height (Ширина/Высота)</span>
-              </label>
-            </div>
-
-            <!-- Кнопки быстрых действий -->
-            <div class="unified-divider"></div>
-              <div class="unified-button-group unified-text-small">
-                <button id="dsv-select-all-props" class="unified-button unified-button-tertiary" style="flex: 1;">
-                  Все
-                </button>
-                <button id="dsv-select-none-props" class="unified-button unified-button-tertiary" style="flex: 1;">
-                  Нет
-                </button>
-                <button id="dsv-select-default-props" class="unified-button unified-button-tertiary" style="flex: 1;">
-                  По умолчанию
-              </button>
-            </div>
+        <div style="background: #2A2A32; border-radius: 8px; padding: 12px;">
+          <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-bottom: 12px;">Проверяемые свойства</div>
+          
+          <!-- Цвета -->
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-fills" checked>
+            <label for="dsv-check-fills">Fill (Заливка)</label>
           </div>
-        </details>
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-strokes" checked>
+            <label for="dsv-check-strokes">Stroke (Обводка)</label>
+          </div>
+          
+          <div class="settings-divider"></div>
+
+          <!-- Размеры и отступы -->
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-corner-radius" checked>
+            <label for="dsv-check-corner-radius">Corner Radius</label>
+          </div>
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-spacing" checked>
+            <label for="dsv-check-spacing">Gap / Item Spacing</label>
+          </div>
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-padding" checked>
+            <label for="dsv-check-padding">Padding</label>
+          </div>
+          
+          <div class="settings-divider"></div>
+
+          <!-- Эффекты и прочее -->
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-effects">
+            <label for="dsv-check-effects">Effects</label>
+          </div>
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-opacity">
+            <label for="dsv-check-opacity">Opacity</label>
+          </div>
+          <div class="settings-item">
+            <input type="checkbox" id="dsv-check-size">
+            <label for="dsv-check-size">Width/Height</label>
+          </div>
+        </div>
       </div>
 
       </div><!-- Конец панели настроек -->
@@ -2401,40 +2543,32 @@
       <!-- Результаты проверки -->
       <div id="dsv-results-panel" style="display: none;">
         
-        <!-- Сводка результатов -->
-        <div id="dsv-summary" class="unified-card unified-mb-16">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; font-size: 11px;">
-            <div style="display: flex; justify-content: space-between;">
-              <span class="unified-text-muted">Проверено элементов: <span id="dsv-total-nodes" style="color: #FFFFFF; font-weight: 600;">0</span></span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span class="unified-text-muted">Найдено проблем: <span id="dsv-total-issues" style="color: #F44336; font-weight: 600;">0</span></span>
-            </div>
-          </div>
+        <!-- Сообщение об успехе (когда ошибок нет) -->
+        <div id="dsv-success-section" class="success-message" style="display: none;">
+          Все свойства привязаны к токенам! 🎉
         </div>
-
+        
         <!-- Список проблем -->
         <div id="dsv-issues-section" style="display: none;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div class="dsv-issues-header">
             <div class="unified-section-title" style="margin-bottom: 0;">
-            ⚠️ Найденные проблемы
+              Проблемы <span id="dsv-total-issues" class="dsv-issues-count">0</span>
             </div>
-            <button id="dsv-fix-all-button" class="unified-button unified-button-primary" style="font-size: 11px; padding: 6px 12px; display: none;">
-              🔧 Исправить все
+            <button id="dsv-fix-all-button" class="unified-button dsv-fix-all-btn" style="display: none;">
+              Исправить всё
             </button>
           </div>
-          <div id="dsv-issues-list" class="unified-results-container" style="max-height: 300px; overflow-y: auto;">
+          <div id="dsv-issues-list" class="unified-results-container dsv-issues-list">
             <!-- Issues will be inserted here -->
           </div>
         </div>
 
-        <!-- Кнопка экспорта отчёта удалена по запросу -->
       </div>
 
       <!-- Индикатор загрузки -->
-        <div id="dsv-loading-indicator" class="unified-loading" style="display: none;">
-          <div style="margin-bottom: 8px;">Проверка...</div>
-        <div id="dsv-progress-text" style="font-size: 11px;">Обработано: <span id="dsv-progress-count">0</span> элементов</div>
+      <div id="dsv-loading-indicator" class="unified-loading" style="display: none;">
+        <div class="dsv-loading-text">Проверка...</div>
+        <div class="dsv-progress-text">Обработано: <span id="dsv-progress-count">0</span> элементов</div>
       </div>
 
     </div>
@@ -4405,18 +4539,44 @@ ${designSystemContext}
     let dsvValidationMode = 'all'; // local, remote, all
     let dsvCurrentReport = null;
     
+    // Вспомогательная функция для управления кнопкой "Исправить все"
+    function updateDSVFixAllButton(issues) {
+      const fixAllButton = document.getElementById('dsv-fix-all-button');
+      if (!fixAllButton) return;
+      
+      const fixableCount = issues ? issues.filter(i => i.suggestedToken).length : 0;
+      
+      if (fixableCount > 0) {
+        fixAllButton.style.display = 'inline-block';
+        fixAllButton.textContent = `Исправить всё`;
+        fixAllButton.disabled = false;
+      } else {
+        fixAllButton.style.display = 'none';
+      }
+    }
+    
+    // Сброс кнопки "Исправить все" в исходное состояние
+    function resetDSVFixAllButton() {
+      const fixAllButton = document.getElementById('dsv-fix-all-button');
+      if (fixAllButton) {
+        fixAllButton.disabled = false;
+        fixAllButton.textContent = 'Исправить всё';
+      }
+    }
+    
     // Функция инициализации Design System Validator
     function initDesignSystemValidator() {
       // Получаем элементы
       const settingsButton = document.getElementById('dsv-settings-button');
       const settingsPanel = document.getElementById('dsv-settings-panel');
       const validateButtonMain = document.getElementById('dsv-validate-button-main');
-      const modeButtons = document.querySelectorAll('.dsv-mode-button');
       const validateButton = document.getElementById('dsv-validate-button');
       
       // Новые элементы для импорта токенов
       const importTokensButton = document.getElementById('dsv-import-tokens-button');
       const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+      const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+      const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
       const fixAllButton = document.getElementById('dsv-fix-all-button');
       
       // Элементы для JSON управления
@@ -4433,11 +4593,29 @@ ${designSystemContext}
             tokensStatusText.textContent = 'Импортирую токены...';
             importTokensButton.disabled = true;
           }
+          if (tokensLoadTime) {
+            tokensLoadTime.style.display = 'none';
+          }
           
           // Отправляем запрос на импорт
           parent.postMessage({
             pluginMessage: {
               type: 'dsv-import-tokens'
+            }
+          }, '*');
+        });
+      }
+      
+      // Обработчик кнопки сброса токенов
+      if (clearTokensButton) {
+        clearTokensButton.addEventListener('click', () => {
+          debugLog('DSV: Запрос сброса токенов');
+          
+          // Отправляем запрос на очистку токенов
+          // UI обновится автоматически через обработчик 'dsv-tokens-cleared'
+          parent.postMessage({
+            pluginMessage: {
+              type: 'dsv-clear-tokens'
             }
           }, '*');
         });
@@ -4495,7 +4673,6 @@ ${designSystemContext}
         settingsButton.addEventListener('click', () => {
           const isHidden = settingsPanel.style.display === 'none';
           settingsPanel.style.display = isHidden ? 'block' : 'none';
-          settingsButton.textContent = isHidden ? 'Закрыть настройки' : 'Настройки';
         });
       }
       
@@ -4505,23 +4682,6 @@ ${designSystemContext}
           runDSVValidation();
         });
       }
-      
-      // Обработчики выбора режима
-      modeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-          // Обновляем стили кнопок
-          modeButtons.forEach(btn => {
-            btn.style.background = '#2A2A32';
-            btn.style.border = '1px solid #505059';
-          });
-          button.style.background = '#F86025';
-          button.style.border = 'none';
-          
-          // Сохраняем выбранный режим
-          dsvValidationMode = button.dataset.mode;
-          debugLog('Design System Validator: Выбран режим', dsvValidationMode);
-        });
-      });
       
       // Обработчик кнопки проверки (оставляем для обратной совместимости)
       if (validateButton) {
@@ -4538,9 +4698,11 @@ ${designSystemContext}
       // Показываем индикатор загрузки
       const loadingIndicator = document.getElementById('dsv-loading-indicator');
       const resultsPanel = document.getElementById('dsv-results-panel');
+      const successSection = document.getElementById('dsv-success-section');
       
       if (loadingIndicator) loadingIndicator.style.display = 'block';
       if (resultsPanel) resultsPanel.style.display = 'none';
+      if (successSection) successSection.style.display = 'none';
       
       // Блокируем кнопку проверки на время выполнения
       const validateButtonMain = document.getElementById('dsv-validate-button-main');
@@ -4730,63 +4892,6 @@ ${designSystemContext}
         });
       }
       
-      // Обработчики для кнопок управления чекбоксами свойств
-      const selectAllPropsBtn = document.getElementById('dsv-select-all-props');
-      const selectNonePropsBtn = document.getElementById('dsv-select-none-props');
-      const selectDefaultPropsBtn = document.getElementById('dsv-select-default-props');
-      
-      const propertyCheckboxes = [
-        'dsv-check-fills',
-        'dsv-check-strokes',
-        'dsv-check-corner-radius',
-        'dsv-check-spacing',
-        'dsv-check-padding',
-        'dsv-check-effects',
-        'dsv-check-opacity',
-        'dsv-check-size'
-      ];
-      
-      // По умолчанию включены: fills, strokes, corner-radius, spacing, padding
-      const defaultEnabled = [
-        'dsv-check-fills',
-        'dsv-check-strokes',
-        'dsv-check-corner-radius',
-        'dsv-check-spacing',
-        'dsv-check-padding'
-      ];
-      
-      if (selectAllPropsBtn) {
-        selectAllPropsBtn.addEventListener('click', () => {
-          propertyCheckboxes.forEach(id => {
-            const checkbox = document.getElementById(id);
-            if (checkbox) checkbox.checked = true;
-          });
-          debugLog('DSV: Выбраны все свойства');
-        });
-      }
-      
-      if (selectNonePropsBtn) {
-        selectNonePropsBtn.addEventListener('click', () => {
-          propertyCheckboxes.forEach(id => {
-            const checkbox = document.getElementById(id);
-            if (checkbox) checkbox.checked = false;
-          });
-          debugLog('DSV: Отключены все свойства');
-        });
-      }
-      
-      if (selectDefaultPropsBtn) {
-        selectDefaultPropsBtn.addEventListener('click', () => {
-          propertyCheckboxes.forEach(id => {
-            const checkbox = document.getElementById(id);
-            if (checkbox) {
-              checkbox.checked = defaultEnabled.includes(id);
-            }
-          });
-          debugLog('DSV: Установлены свойства по умолчанию');
-        });
-      }
-      
       debugLog('Design System Validator: Инициализация завершена');
     })(); // Закрытие continueInitDSV и немедленный вызов
     
@@ -4805,17 +4910,13 @@ ${designSystemContext}
       // Сохраняем отчёт
       dsvCurrentReport = report;
       
-      // Обновляем сводку
-      const totalNodesEl = document.getElementById('dsv-total-nodes');
-      if (totalNodesEl) totalNodesEl.textContent = report.totalNodes || 0;
-      
+      // Обновляем счётчик проблем
       const totalIssuesEl = document.getElementById('dsv-total-issues');
       if (totalIssuesEl) totalIssuesEl.textContent = report.totalIssues || 0;
       
       // Отображаем список проблем
       const issuesSection = document.getElementById('dsv-issues-section');
       const issuesList = document.getElementById('dsv-issues-list');
-      const fixAllButton = document.getElementById('dsv-fix-all-button');
       
       if (report.issues && report.issues.length > 0) {
         if (issuesSection) issuesSection.style.display = 'block';
@@ -4828,33 +4929,18 @@ ${designSystemContext}
           });
         }
         
-        // Показываем кнопку "Fix All" если есть исправляемые проблемы
-        const fixableIssues = report.issues.filter(issue => issue.suggestedToken);
-        if (fixAllButton && fixableIssues.length > 0) {
-          fixAllButton.style.display = 'inline-block';
-          fixAllButton.textContent = `🔧 Исправить все (${fixableIssues.length})`;
-        } else if (fixAllButton) {
-          fixAllButton.style.display = 'none';
-        }
+        // Обновляем кнопку "Исправить все"
+        updateDSVFixAllButton(report.issues);
       } else {
         if (issuesSection) issuesSection.style.display = 'none';
-        if (fixAllButton) fixAllButton.style.display = 'none';
+        updateDSVFixAllButton(null);
       }
     }
     
     // Функция создания карточки проблемы
     function createDSVIssueCard(issue, issueIndex) {
       const card = document.createElement('div');
-      card.style.cssText = 'background: #44444C; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid ' + 
-        (issue.severity === 'high' ? '#F44336' : issue.severity === 'medium' ? '#FF9800' : '#FFC107') + '; cursor: pointer; transition: all 0.2s;';
-      
-      card.addEventListener('mouseenter', () => {
-        card.style.background = '#505059';
-      });
-      
-      card.addEventListener('mouseleave', () => {
-        card.style.background = '#44444C';
-      });
+      card.className = 'unified-issue-card';
       
       // Кликабельность для перехода к элементу
       const cardClickHandler = (e) => {
@@ -5827,8 +5913,11 @@ ${designSystemContext}
         debugLog('DSV: Токены импортированы', message.count);
         
         const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+        const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
         const importTokensButton = document.getElementById('dsv-import-tokens-button');
         const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
         const copyJsonButton = document.getElementById('dsv-copy-json-button');
         
         if (tokensStatusText) {
@@ -5836,8 +5925,26 @@ ${designSystemContext}
           tokensStatusText.style.color = '#4CAF50';
         }
         
+        // Показываем дату и время загрузки
+        if (tokensLoadTime) {
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          tokensLoadTime.textContent = `${dateStr} в ${timeStr}`;
+          tokensLoadTime.style.display = 'inline-block';
+        }
+        
+        // Переключаем кнопки: скрываем импорт, показываем сброс
         if (importTokensButton) {
-          importTokensButton.disabled = false;
+          importTokensButton.style.display = 'none';
+        }
+        if (clearTokensButton) {
+          clearTokensButton.style.display = 'block';
+        }
+        
+        // Показываем блок просмотра JSON
+        if (tokensJsonDetails) {
+          tokensJsonDetails.style.display = 'block';
         }
         
         // Показываем JSON в textarea
@@ -5888,12 +5995,38 @@ ${designSystemContext}
         debugLog('DSV: JSON загружен', message.count);
         
         const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+        const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
+        const importTokensButton = document.getElementById('dsv-import-tokens-button');
         const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
         const copyJsonButton = document.getElementById('dsv-copy-json-button');
         
         if (tokensStatusText) {
-          tokensStatusText.textContent = `Загружено токенов: ${message.count} (из JSON файла)`;
+          tokensStatusText.textContent = `Загружено токенов: ${message.count}`;
           tokensStatusText.style.color = '#4CAF50';
+        }
+        
+        // Показываем дату и время загрузки
+        if (tokensLoadTime) {
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          tokensLoadTime.textContent = `${dateStr} в ${timeStr} (из JSON файла)`;
+          tokensLoadTime.style.display = 'inline-block';
+        }
+        
+        // Переключаем кнопки: скрываем импорт, показываем сброс
+        if (importTokensButton) {
+          importTokensButton.style.display = 'none';
+        }
+        if (clearTokensButton) {
+          clearTokensButton.style.display = 'block';
+        }
+        
+        // Показываем блок просмотра JSON
+        if (tokensJsonDetails) {
+          tokensJsonDetails.style.display = 'block';
         }
         
         // Показываем JSON в textarea
@@ -5910,10 +6043,65 @@ ${designSystemContext}
         debugLog('DSV: Токены не найдены в памяти');
         
         const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+        const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
+        const importTokensButton = document.getElementById('dsv-import-tokens-button');
+        const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
         
         if (tokensStatusText) {
           tokensStatusText.textContent = 'Токены не загружены';
           tokensStatusText.style.color = '#AAAAAA';
+        }
+        if (tokensLoadTime) {
+          tokensLoadTime.style.display = 'none';
+        }
+        // Переключаем кнопки: показываем импорт, скрываем сброс
+        if (importTokensButton) {
+          importTokensButton.style.display = 'block';
+        }
+        if (clearTokensButton) {
+          clearTokensButton.style.display = 'none';
+        }
+        // Скрываем блок просмотра JSON
+        if (tokensJsonDetails) {
+          tokensJsonDetails.style.display = 'none';
+        }
+      } else if (message.type === 'dsv-tokens-cleared') {
+        // Design System Validator - токены очищены
+        debugLog('DSV: Токены очищены');
+        
+        const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+        const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
+        const importTokensButton = document.getElementById('dsv-import-tokens-button');
+        const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
+        const copyJsonButton = document.getElementById('dsv-copy-json-button');
+        
+        if (tokensStatusText) {
+          tokensStatusText.textContent = 'Токены не загружены';
+          tokensStatusText.style.color = '#AAAAAA';
+        }
+        if (tokensLoadTime) {
+          tokensLoadTime.style.display = 'none';
+          tokensLoadTime.textContent = '';
+        }
+        // Переключаем кнопки: показываем импорт, скрываем сброс
+        if (importTokensButton) {
+          importTokensButton.style.display = 'block';
+        }
+        if (clearTokensButton) {
+          clearTokensButton.style.display = 'none';
+        }
+        // Скрываем блок просмотра JSON
+        if (tokensJsonDetails) {
+          tokensJsonDetails.style.display = 'none';
+        }
+        if (tokensJsonTextarea) {
+          tokensJsonTextarea.value = '';
+        }
+        if (copyJsonButton) {
+          copyJsonButton.style.display = 'none';
         }
       } else if (message.type === 'dsv-validation-complete') {
         // Design System Validator - валидация завершена (новый формат)
@@ -5923,7 +6111,7 @@ ${designSystemContext}
         const resultsPanel = document.getElementById('dsv-results-panel');
         const issuesSection = document.getElementById('dsv-issues-section');
         const issuesList = document.getElementById('dsv-issues-list');
-        const fixAllButton = document.getElementById('dsv-fix-all-button');
+        const successSection = document.getElementById('dsv-success-section');
         
         // Скрываем индикатор загрузки
         if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -5947,14 +6135,14 @@ ${designSystemContext}
         };
         dsvCurrentReport = report;
         
-        const totalNodesEl = document.getElementById('dsv-total-nodes');
+        // Обновляем счётчик проблем
         const totalIssuesEl = document.getElementById('dsv-total-issues');
-        
-        if (totalNodesEl) totalNodesEl.textContent = report.totalNodes;
         if (totalIssuesEl) totalIssuesEl.textContent = report.totalIssues;
         
-        // Отображаем список проблем
+        // Отображаем список проблем или сообщение об успехе
         if (report.issues && report.issues.length > 0) {
+          // Есть ошибки - скрываем success, показываем issues
+          if (successSection) successSection.style.display = 'none';
           if (issuesSection) issuesSection.style.display = 'block';
           
           // Очищаем список
@@ -5977,33 +6165,24 @@ ${designSystemContext}
           // Создаём карточки для каждой ноды
           Object.values(groupedErrors).forEach(group => {
             const issueCard = document.createElement('div');
-            issueCard.className = 'unified-error-card';
-            issueCard.style.cursor = 'pointer';
+            issueCard.className = 'unified-issue-card';
             
             // Список ошибок для этой ноды
             const errorsList = group.errors.map(err => {
               const tokenInfo = err.suggestedToken ? 
-                ` → <span style="color: #4CAF50;">${err.suggestedToken.name}</span>` : '';
-              return `<div style="font-size: 10px; color: #AAAAAA; margin-top: 2px;">
-                • ${err.property}: ${err.value}${tokenInfo}
-              </div>`;
+                ` → <span class="dsv-issue-token">${err.suggestedToken.name}</span>` : '';
+              return `<div class="dsv-issue-error">${err.property}: ${err.value}${tokenInfo}</div>`;
             }).join('');
             
             issueCard.innerHTML = `
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 12px; color: #FF9800; font-weight: 600; margin-bottom: 4px;">
-                    ${group.nodeName}
-                  </div>
-                  <div style="font-size: 11px; color: #FFFFFF; margin-bottom: 4px;">
-                    ${group.errors.length} ошибок
-                  </div>
+              <div class="dsv-issue-content">
+                <div class="dsv-issue-info">
+                  <div class="dsv-issue-node-name">${group.nodeName}</div>
                   ${errorsList}
                 </div>
-                <button class="dsv-fix-node-button unified-button unified-button-primary" 
-                        data-node-id="${group.nodeId}" 
-                        style="font-size: 10px; padding: 6px 12px; margin-left: 8px; flex-shrink: 0; width: auto; white-space: nowrap;">
-                  🔧 Исправить
+                <button class="dsv-fix-node-button unified-button dsv-fix-node-btn" 
+                        data-node-id="${group.nodeId}">
+                  Исправить<span class="dsv-btn-count">${group.errors.length}</span>
                 </button>
               </div>
             `;
@@ -6042,59 +6221,202 @@ ${designSystemContext}
             });
           });
           
-          // Показываем кнопку "Исправить все" если есть исправляемые проблемы
-          const fixableCount = report.issues.filter(i => i.suggestedToken).length;
-          if (fixAllButton && fixableCount > 0) {
-            fixAllButton.style.display = 'inline-block';
-            fixAllButton.textContent = `🔧 Исправить все (${fixableCount})`;
-          }
+          // Обновляем кнопку "Исправить все"
+          updateDSVFixAllButton(report.issues);
         } else {
+          // Нет ошибок - показываем success message
           if (issuesSection) issuesSection.style.display = 'none';
-          if (fixAllButton) fixAllButton.style.display = 'none';
+          if (successSection) successSection.style.display = 'block';
+          updateDSVFixAllButton(null);
         }
       } else if (message.type === 'dsv-fix-success') {
         // Design System Validator - проблема исправлена
         debugLog('DSV: Проблема исправлена', message.issueId);
         
-        // Перезапускаем проверку чтобы обновить результаты
-        setTimeout(() => {
-          runDSVValidation();
-        }, 500);
+        // Удаляем исправленную ошибку из текущего отчёта и UI
+        if (dsvCurrentReport && dsvCurrentReport.issues) {
+          // Удаляем ошибку из массива
+          dsvCurrentReport.issues = dsvCurrentReport.issues.filter(issue => {
+            // Если есть конкретный propertyKey, удаляем только эту ошибку
+            if (message.propertyKey) {
+              return !(issue.nodeId === message.issueId && issue.property === message.propertyKey);
+            }
+            // Иначе удаляем все ошибки этой ноды
+            return issue.nodeId !== message.issueId;
+          });
+          
+          dsvCurrentReport.totalIssues = dsvCurrentReport.issues.length;
+          
+          // Обновляем счётчик
+          const totalIssuesEl = document.getElementById('dsv-total-issues');
+          if (totalIssuesEl) totalIssuesEl.textContent = dsvCurrentReport.totalIssues;
+          
+          // Удаляем карточку из UI
+          const issueCard = document.querySelector(`.unified-issue-card [data-node-id="${message.issueId}"]`);
+          if (issueCard) {
+            const card = issueCard.closest('.unified-issue-card');
+            if (card) {
+              // Если у ноды остались ошибки - обновляем карточку, иначе удаляем
+              const remainingErrors = dsvCurrentReport.issues.filter(i => i.nodeId === message.issueId);
+              if (remainingErrors.length === 0) {
+                card.remove();
+              } else {
+                // Обновляем счётчик на кнопке
+                const countSpan = card.querySelector('.dsv-btn-count');
+                if (countSpan) countSpan.textContent = remainingErrors.length;
+              }
+            }
+          }
+          
+          // Если ошибок больше нет - показываем success
+          if (dsvCurrentReport.issues.length === 0) {
+            const issuesSection = document.getElementById('dsv-issues-section');
+            const successSection = document.getElementById('dsv-success-section');
+            if (issuesSection) issuesSection.style.display = 'none';
+            if (successSection) successSection.style.display = 'block';
+          }
+          
+          // Обновляем кнопку "Исправить все"
+          updateDSVFixAllButton(dsvCurrentReport.issues);
+        }
+      } else if (message.type === 'dsv-fix-node-complete') {
+        // Design System Validator - исправление ошибок одной ноды завершено
+        debugLog('DSV: Ошибки ноды исправлены', message.nodeId, message.result);
+        
+        if (dsvCurrentReport && dsvCurrentReport.issues && message.result.fixedIds) {
+          // Удаляем исправленные ошибки из отчёта
+          dsvCurrentReport.issues = dsvCurrentReport.issues.filter(issue => {
+            const issueKey = issue.nodeId + ':' + issue.property;
+            return !message.result.fixedIds.includes(issueKey);
+          });
+          dsvCurrentReport.totalIssues = dsvCurrentReport.issues.length;
+          
+          // Обновляем счётчик
+          const totalIssuesEl = document.getElementById('dsv-total-issues');
+          if (totalIssuesEl) totalIssuesEl.textContent = dsvCurrentReport.totalIssues;
+          
+          // Удаляем карточку этой ноды из UI
+          const issueCard = document.querySelector(`.unified-issue-card [data-node-id="${message.nodeId}"]`);
+          if (issueCard) {
+            const card = issueCard.closest('.unified-issue-card');
+            if (card) {
+              const remainingErrors = dsvCurrentReport.issues.filter(i => i.nodeId === message.nodeId);
+              if (remainingErrors.length === 0) {
+                card.remove();
+              } else {
+                // Обновляем счётчик на кнопке
+                const countSpan = card.querySelector('.dsv-btn-count');
+                if (countSpan) countSpan.textContent = remainingErrors.length;
+              }
+            }
+          }
+          
+          // Если ошибок больше нет - показываем success
+          if (dsvCurrentReport.issues.length === 0) {
+            const issuesSection = document.getElementById('dsv-issues-section');
+            const successSection = document.getElementById('dsv-success-section');
+            if (issuesSection) issuesSection.style.display = 'none';
+            if (successSection) successSection.style.display = 'block';
+          }
+          
+          // Обновляем кнопку "Исправить все"
+          updateDSVFixAllButton(dsvCurrentReport.issues);
+        }
       } else if (message.type === 'dsv-fix-all-complete') {
         // Design System Validator - массовое исправление завершено
         debugLog('DSV: Массовое исправление завершено', message.results);
         
-        const fixAllButton = document.getElementById('dsv-fix-all-button');
+        // Сбрасываем кнопку в исходное состояние
+        resetDSVFixAllButton();
         
-        if (fixAllButton) {
-          fixAllButton.disabled = false;
-          fixAllButton.textContent = '🔧 Исправить все';
+        // Удаляем исправленные ошибки из отчёта
+        if (dsvCurrentReport && dsvCurrentReport.issues && message.results.fixedIds) {
+          dsvCurrentReport.issues = dsvCurrentReport.issues.filter(issue => {
+            return !message.results.fixedIds.includes(issue.nodeId + ':' + issue.property);
+          });
+          dsvCurrentReport.totalIssues = dsvCurrentReport.issues.length;
+          
+          // Обновляем счётчик
+          const totalIssuesEl = document.getElementById('dsv-total-issues');
+          if (totalIssuesEl) totalIssuesEl.textContent = dsvCurrentReport.totalIssues;
         }
         
         // Показываем результаты
         alert(`Исправлено: ${message.results.fixed}\nОшибок: ${message.results.failed}\nВсего: ${message.results.total}`);
         
-        // Перезапускаем проверку
-        setTimeout(() => {
-          runDSVValidation();
-        }, 500);
+        // Если все ошибки исправлены - показываем success
+        if (dsvCurrentReport && dsvCurrentReport.issues.length === 0) {
+          const issuesSection = document.getElementById('dsv-issues-section');
+          const successSection = document.getElementById('dsv-success-section');
+          const issuesList = document.getElementById('dsv-issues-list');
+          if (issuesSection) issuesSection.style.display = 'none';
+          if (successSection) successSection.style.display = 'block';
+          if (issuesList) issuesList.innerHTML = '';
+          updateDSVFixAllButton(null);
+        } else {
+          // Обновляем UI - удаляем исправленные карточки
+          if (message.results.fixedIds) {
+            message.results.fixedIds.forEach(fixedId => {
+              const [nodeId] = fixedId.split(':');
+              const remainingErrors = dsvCurrentReport.issues.filter(i => i.nodeId === nodeId);
+              if (remainingErrors.length === 0) {
+                const card = document.querySelector(`.unified-issue-card [data-node-id="${nodeId}"]`)?.closest('.unified-issue-card');
+                if (card) card.remove();
+              }
+            });
+          }
+          updateDSVFixAllButton(dsvCurrentReport.issues);
+        }
       } else if (message.type === 'dsv-tokens-status') {
         // Design System Validator - статус токенов при инициализации
         debugLog('Design System Validator: Статус токенов', message);
         
-        const tokensJsonStatus = document.getElementById('dsv-tokens-json-status');
-        const tokensJsonStatusText = document.getElementById('dsv-tokens-json-status-text');
-        const clearTokensJsonButton = document.getElementById('dsv-clear-tokens-json-button');
+        const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+        const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
+        const importTokensButton = document.getElementById('dsv-import-tokens-button');
+        const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
         
         if (message.hasTokens && message.count > 0) {
-          if (tokensJsonStatus && tokensJsonStatusText) {
-            tokensJsonStatus.style.display = 'block';
-            tokensJsonStatusText.textContent = `Загружено токенов: ${message.count}`;
-            tokensJsonStatusText.style.color = '#4CAF50';
+          if (tokensStatusText) {
+            tokensStatusText.textContent = `Загружено токенов: ${message.count}`;
+            tokensStatusText.style.color = '#4CAF50';
           }
           
-          if (clearTokensJsonButton) {
-            clearTokensJsonButton.disabled = false;
+          // Показываем время загрузки (из памяти)
+          if (tokensLoadTime && message.savedAt) {
+            const savedDate = new Date(message.savedAt);
+            const dateStr = savedDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = savedDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            tokensLoadTime.textContent = `${dateStr} в ${timeStr} (из памяти)`;
+            tokensLoadTime.style.display = 'inline-block';
+          } else if (tokensLoadTime) {
+            tokensLoadTime.textContent = 'из памяти';
+            tokensLoadTime.style.display = 'inline-block';
+          }
+          
+          // Переключаем кнопки: скрываем импорт, показываем сброс
+          if (importTokensButton) {
+            importTokensButton.style.display = 'none';
+          }
+          if (clearTokensButton) {
+            clearTokensButton.style.display = 'block';
+          }
+          
+          // Показываем блок просмотра JSON
+          if (tokensJsonDetails) {
+            tokensJsonDetails.style.display = 'block';
+          }
+        } else {
+          // Токенов нет - показываем импорт, скрываем сброс
+          if (importTokensButton) {
+            importTokensButton.style.display = 'block';
+          }
+          if (clearTokensButton) {
+            clearTokensButton.style.display = 'none';
+          }
+          if (tokensJsonDetails) {
+            tokensJsonDetails.style.display = 'none';
           }
         }
       } else {
@@ -6270,14 +6592,7 @@ ${designSystemContext}
         }
       }
       
-      // Анимация для кнопок
-      const buttons = document.querySelectorAll('button');
-      buttons.forEach((button, index) => {
-        button.classList.add('animate-slideIn');
-        button.style.animationDelay = `${index * 0.1}s`;
-      });
-      
-      // Добавляем классы анимации для выпадающего меню настроек
+      // Анимация для выпадающего меню настроек (анимация кнопок убрана)
       if (settingsDropdown) {
         settingsDropdown.classList.add('animate-fadeIn');
       }
