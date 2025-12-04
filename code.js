@@ -3150,6 +3150,64 @@ figma.ui.onmessage = async function(msg) {
         });
         figma.notify(`✗ Ошибка загрузки: ${error.message}`, { error: true });
       }
+    } else if (msg.type === 'dsv-save-tokens-github') {
+      // Design System Validator - сохранение токенов из GitHub
+      try {
+        const tokensData = msg.tokensData;
+        
+        // Подсчитываем количество токенов
+        let count = tokensData.count || 0;
+        if (!count && tokensData.variables) {
+          count = countTokensInVariables(tokensData.variables);
+        }
+        
+        console.log('DSV: Сохранение токенов из GitHub, количество:', count);
+        
+        // Добавляем timestamp
+        tokensData.timestamp = new Date().toISOString();
+        tokensData.count = count;
+        tokensData.source = 'github';
+        
+        // Сохраняем в память плагина
+        savedTokensFromJson = tokensData;
+        
+        // Пытаемся сохранить в clientStorage
+        try {
+          await figma.clientStorage.setAsync('dsv-tokens', tokensData);
+          
+          console.log('DSV: Токены из GitHub сохранены в clientStorage');
+          
+          figma.ui.postMessage({
+            type: 'dsv-tokens-saved-github',
+            count: count,
+            savedAt: tokensData.timestamp,
+            persistent: true,
+            tokensData: tokensData
+          });
+        } catch (storageError) {
+          console.warn('DSV: Не удалось сохранить в clientStorage:', storageError);
+          
+          figma.ui.postMessage({
+            type: 'dsv-tokens-saved-github',
+            count: count,
+            savedAt: tokensData.timestamp,
+            persistent: false,
+            warning: 'Токены загружены в память, но не сохранены навсегда',
+            tokensData: tokensData
+          });
+        }
+        
+        figma.notify(`✓ Загружено ${count} токенов из GitHub`);
+        console.log('DSV: Токены успешно загружены из GitHub');
+      } catch (error) {
+        console.error('DSV: Ошибка при загрузке токенов из GitHub:', error);
+        
+        figma.ui.postMessage({
+          type: 'dsv-tokens-save-error',
+          error: error.message || 'Неизвестная ошибка'
+        });
+        figma.notify(`✗ Ошибка загрузки: ${error.message}`, { error: true });
+      }
     } else if (msg.type === 'dsv-save-tokens') {
       // Design System Validator - сохранение токенов в памяти и в clientStorage (legacy формат)
       try {

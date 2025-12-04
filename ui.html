@@ -2580,12 +2580,15 @@
 
         <!-- Кнопки управления (взаимоисключающие) -->
         <input type="file" id="dsv-tokens-json-file" accept=".json" style="display: none;">
-        <div style="margin-top: 16px; display: flex; gap: 8px;">
-          <button id="dsv-import-tokens-button" class="unified-button unified-button-secondary" style="flex: 1; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
+        <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button id="dsv-import-tokens-button" class="unified-button unified-button-secondary" style="flex: 1; min-width: 90px; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
             Из библиотеки
           </button>
-          <button id="dsv-load-tokens-json-button" class="unified-button unified-button-secondary" style="flex: 1; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
-            Загрузить JSON
+          <button id="dsv-load-tokens-json-button" class="unified-button unified-button-secondary" style="flex: 1; min-width: 90px; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
+            Из файла
+          </button>
+          <button id="dsv-load-tokens-github-button" class="unified-button unified-button-secondary" style="flex: 1; min-width: 90px; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
+            Из GitHub
           </button>
         </div>
         <button id="dsv-clear-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px; margin-top: 8px; margin-bottom: 0 !important; display: none;">
@@ -5039,6 +5042,60 @@ ${designSystemContext}
         });
       }
       
+      // Обработчик кнопки загрузки из GitHub
+      const loadTokensGithubButton = document.getElementById('dsv-load-tokens-github-button');
+      if (loadTokensGithubButton) {
+        loadTokensGithubButton.addEventListener('click', async () => {
+          const githubUrl = 'https://raw.githubusercontent.com/kotovod/Orbita-DS-Tools/main/orbita-ds_variables.json';
+          
+          debugLog('Design System Validator: Загрузка токенов из GitHub...', githubUrl);
+          
+          // Показываем статус загрузки
+          const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+          if (tokensStatusText) {
+            tokensStatusText.textContent = 'Загрузка из GitHub...';
+            tokensStatusText.style.color = '#AAAAAA';
+          }
+          loadTokensGithubButton.disabled = true;
+          
+          try {
+            const response = await fetch(githubUrl);
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const jsonData = await response.json();
+            debugLog('Design System Validator: JSON загружен из GitHub', jsonData);
+            
+            // Валидация JSON
+            if (!jsonData.variables || typeof jsonData.variables !== 'object') {
+              throw new Error('JSON должен содержать объект "variables"');
+            }
+            
+            // Отправляем данные токенов в code.js для хранения
+            parent.postMessage({
+              pluginMessage: {
+                type: 'dsv-save-tokens-github',
+                tokensData: jsonData
+              }
+            }, '*');
+            
+            debugLog('Design System Validator: Токены из GitHub отправлены в плагин');
+          } catch (error) {
+            debugError('Design System Validator: Ошибка загрузки из GitHub', error);
+            showFigmaNotify(`Ошибка: ${error.message}`, true);
+            
+            if (tokensStatusText) {
+              tokensStatusText.textContent = 'Ошибка загрузки';
+              tokensStatusText.style.color = '#F44336';
+            }
+          } finally {
+            loadTokensGithubButton.disabled = false;
+          }
+        });
+      }
+      
       // Запрашиваем у плагина, есть ли сохранённые токены
       parent.postMessage({
         pluginMessage: {
@@ -6069,6 +6126,59 @@ ${designSystemContext}
         }
         
         showFigmaNotify('✓ Токены загружены из JSON файла');
+      } else if (message.type === 'dsv-tokens-saved-github') {
+        // Design System Validator - токены успешно загружены из GitHub
+        debugLog('Design System Validator: Токены загружены из GitHub', message.count);
+        
+        const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+        const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
+        const importTokensButton = document.getElementById('dsv-import-tokens-button');
+        const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
+        const copyJsonButton = document.getElementById('dsv-copy-json-button');
+        
+        // Обновляем статус
+        if (tokensStatusText) {
+          tokensStatusText.textContent = `Загружено токенов: ${message.count}`;
+          if (message.persistent === false && message.warning) {
+            tokensStatusText.style.color = '#FF9800';
+          } else {
+            tokensStatusText.style.color = '#4CAF50';
+          }
+        }
+        
+        // Показываем дату и время загрузки
+        if (tokensLoadTime) {
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          tokensLoadTime.textContent = `${dateStr} в ${timeStr} (из GitHub)`;
+          tokensLoadTime.style.display = 'inline-block';
+        }
+        
+        // Скрываем кнопки импорта, показываем кнопку сброса
+        if (importTokensButton && importTokensButton.parentElement) {
+          importTokensButton.parentElement.style.display = 'none';
+        }
+        if (clearTokensButton) {
+          clearTokensButton.style.display = 'block';
+        }
+        
+        // Показываем блок просмотра JSON
+        if (tokensJsonDetails) {
+          tokensJsonDetails.style.display = 'block';
+        }
+        
+        // Показываем JSON в textarea
+        if (tokensJsonTextarea && message.tokensData) {
+          tokensJsonTextarea.value = JSON.stringify(message.tokensData, null, 2);
+          if (copyJsonButton) {
+            copyJsonButton.style.display = 'block';
+          }
+        }
+        
+        showFigmaNotify('✓ Токены загружены из GitHub');
       } else if (message.type === 'dsv-tokens-save-error') {
         // Design System Validator - ошибка при сохранении токенов
         debugError('Design System Validator: Ошибка сохранения токенов', message.error);

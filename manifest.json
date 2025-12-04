@@ -10,7 +10,9 @@
       "https://yandex-team.ru",
       "https://cdn.jsdelivr.net",
       "https://api.eliza.yandex.net",
-      "https://events.statsigapi.net"
+      "https://events.statsigapi.net",
+      "https://raw.githubusercontent.com",
+      "https://kotovod.github.io"
     ]
   },
   "menu": [
