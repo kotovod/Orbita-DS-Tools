@@ -2579,14 +2579,18 @@
         </details>
 
         <!-- Кнопки управления (взаимоисключающие) -->
-        <div style="margin-top: 16px;">
-          <button id="dsv-import-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
-            Импортировать из библиотеки
+        <input type="file" id="dsv-tokens-json-file" accept=".json" style="display: none;">
+        <div style="margin-top: 16px; display: flex; gap: 8px;">
+          <button id="dsv-import-tokens-button" class="unified-button unified-button-secondary" style="flex: 1; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
+            Из библиотеки
           </button>
-          <button id="dsv-clear-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important; display: none;">
-            Сбросить токены
+          <button id="dsv-load-tokens-json-button" class="unified-button unified-button-secondary" style="flex: 1; font-size: 11px; padding: 8px 12px; margin-bottom: 0 !important;">
+            Загрузить JSON
           </button>
         </div>
+        <button id="dsv-clear-tokens-button" class="unified-button unified-button-secondary" style="width: 100%; font-size: 11px; padding: 8px 12px; margin-top: 8px; margin-bottom: 0 !important; display: none;">
+          Сбросить токены
+        </button>
 
       </div><!-- Конец управления токенами -->
 
@@ -5001,34 +5005,23 @@ ${designSystemContext}
               const jsonData = JSON.parse(event.target.result);
               debugLog('Design System Validator: JSON загружен', jsonData);
               
-              // Валидация JSON
-              if (!jsonData.tokens || !Array.isArray(jsonData.tokens)) {
-                throw new Error('JSON должен содержать массив "tokens"');
+              // Валидация JSON - поддерживаем формат экспорта { variables: {...}, count: ..., timestamp: ... }
+              if (!jsonData.variables || typeof jsonData.variables !== 'object') {
+                throw new Error('JSON должен содержать объект "variables" (формат экспорта из плагина)');
               }
               
-              // Отправляем токены в code.js для хранения
+              // Отправляем полные данные токенов в code.js для хранения
               parent.postMessage({
                 pluginMessage: {
-                  type: 'dsv-save-tokens',
-                  tokens: jsonData.tokens
+                  type: 'dsv-save-tokens-full',
+                  tokensData: jsonData
                 }
               }, '*');
-              
-              // Показываем статус загрузки
-              if (tokensJsonStatus) {
-                tokensJsonStatus.style.display = 'block';
-                tokensJsonStatusText.textContent = 'Загружаю токены...';
-                tokensJsonStatusText.style.color = '#AAAAAA';
-              }
               
               debugLog('Design System Validator: Токены отправлены в плагин');
             } catch (error) {
               debugError('Design System Validator: Ошибка парсинга JSON', error);
-              if (tokensJsonStatus) {
-                tokensJsonStatus.style.display = 'block';
-                tokensJsonStatusText.textContent = `Ошибка: ${error.message}`;
-                tokensJsonStatusText.style.color = '#F44336';
-              }
+              showFigmaNotify(`Ошибка: ${error.message}`, true);
             }
           };
           reader.readAsText(file);
@@ -6023,37 +6016,59 @@ ${designSystemContext}
           debugError('Design System Validator: Ошибка экспорта токенов', message.error);
         }
       } else if (message.type === 'dsv-tokens-saved') {
-        // Design System Validator - токены успешно сохранены
+        // Design System Validator - токены успешно сохранены (из JSON файла)
         debugLog('Design System Validator: Токены сохранены в памяти плагина', message.count);
         
-        const tokensJsonStatus = document.getElementById('dsv-tokens-json-status');
-        const tokensJsonStatusText = document.getElementById('dsv-tokens-json-status-text');
-        const clearTokensJsonButton = document.getElementById('dsv-clear-tokens-json-button');
+        const tokensStatusText = document.getElementById('dsv-tokens-status-text');
+        const tokensLoadTime = document.getElementById('dsv-tokens-load-time');
+        const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
+        const importTokensButton = document.getElementById('dsv-import-tokens-button');
+        const loadTokensJsonButton = document.getElementById('dsv-load-tokens-json-button');
+        const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
+        const copyJsonButton = document.getElementById('dsv-copy-json-button');
         
-        if (tokensJsonStatus && tokensJsonStatusText) {
-          tokensJsonStatus.style.display = 'block';
-          
-          let statusText = `Загружено токенов: ${message.count}`;
-          if (message.savedAt) {
-            const date = new Date(message.savedAt);
-            const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-            statusText += ` (${timeStr})`;
-          }
-          
-          // Показываем предупреждение если токены не сохранены навсегда
+        // Обновляем статус
+        if (tokensStatusText) {
+          tokensStatusText.textContent = `Загружено токенов: ${message.count}`;
           if (message.persistent === false && message.warning) {
-            statusText += '\n⚠️ ' + message.warning;
-            tokensJsonStatusText.style.color = '#FF9800'; // Оранжевый для предупреждения
+            tokensStatusText.style.color = '#FF9800'; // Оранжевый для предупреждения
           } else {
-            tokensJsonStatusText.style.color = '#4CAF50'; // Зелёный для успеха
+            tokensStatusText.style.color = '#4CAF50'; // Зелёный для успеха
           }
-          
-          tokensJsonStatusText.textContent = statusText;
         }
         
-        if (clearTokensJsonButton) {
-          clearTokensJsonButton.disabled = false;
+        // Показываем дату и время загрузки
+        if (tokensLoadTime) {
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          tokensLoadTime.textContent = `${dateStr} в ${timeStr} (из JSON файла)`;
+          tokensLoadTime.style.display = 'inline-block';
         }
+        
+        // Скрываем кнопки импорта, показываем кнопку сброса
+        if (importTokensButton) {
+          importTokensButton.parentElement.style.display = 'none'; // Скрываем весь контейнер с обеими кнопками
+        }
+        if (clearTokensButton) {
+          clearTokensButton.style.display = 'block';
+        }
+        
+        // Показываем блок просмотра JSON
+        if (tokensJsonDetails) {
+          tokensJsonDetails.style.display = 'block';
+        }
+        
+        // Показываем JSON в textarea
+        if (tokensJsonTextarea && message.tokensData) {
+          tokensJsonTextarea.value = JSON.stringify(message.tokensData, null, 2);
+          if (copyJsonButton) {
+            copyJsonButton.style.display = 'block';
+          }
+        }
+        
+        showFigmaNotify('✓ Токены загружены из JSON файла');
       } else if (message.type === 'dsv-tokens-save-error') {
         // Design System Validator - ошибка при сохранении токенов
         debugError('Design System Validator: Ошибка сохранения токенов', message.error);
@@ -6135,9 +6150,9 @@ ${designSystemContext}
           tokensLoadTime.style.display = 'inline-block';
         }
         
-        // Переключаем кнопки: скрываем импорт, показываем сброс
-        if (importTokensButton) {
-          importTokensButton.style.display = 'none';
+        // Переключаем кнопки: скрываем контейнер импорта, показываем сброс
+        if (importTokensButton && importTokensButton.parentElement) {
+          importTokensButton.parentElement.style.display = 'none'; // Скрываем контейнер с обеими кнопками
         }
         if (clearTokensButton) {
           clearTokensButton.style.display = 'block';
@@ -6155,6 +6170,8 @@ ${designSystemContext}
             copyJsonButton.style.display = 'block';
           }
         }
+        
+        showFigmaNotify('✓ Токены импортированы из библиотеки');
       } else if (message.type === 'dsv-json-export-ready') {
         // Design System Validator - JSON готов к экспорту
         debugLog('DSV: JSON готов к экспорту');
@@ -6256,9 +6273,9 @@ ${designSystemContext}
         if (tokensLoadTime) {
           tokensLoadTime.style.display = 'none';
         }
-        // Переключаем кнопки: показываем импорт, скрываем сброс
-        if (importTokensButton) {
-          importTokensButton.style.display = 'block';
+        // Переключаем кнопки: показываем контейнер с импортом, скрываем сброс
+        if (importTokensButton && importTokensButton.parentElement) {
+          importTokensButton.parentElement.style.display = 'flex'; // Показываем контейнер с обеими кнопками
         }
         if (clearTokensButton) {
           clearTokensButton.style.display = 'none';
@@ -6287,9 +6304,9 @@ ${designSystemContext}
           tokensLoadTime.style.display = 'none';
           tokensLoadTime.textContent = '';
         }
-        // Переключаем кнопки: показываем импорт, скрываем сброс
-        if (importTokensButton) {
-          importTokensButton.style.display = 'block';
+        // Переключаем кнопки: показываем контейнер с импортом, скрываем сброс
+        if (importTokensButton && importTokensButton.parentElement) {
+          importTokensButton.parentElement.style.display = 'flex'; // Показываем контейнер с обеими кнопками
         }
         if (clearTokensButton) {
           clearTokensButton.style.display = 'none';
@@ -6304,6 +6321,8 @@ ${designSystemContext}
         if (copyJsonButton) {
           copyJsonButton.style.display = 'none';
         }
+        
+        showFigmaNotify('Токены сброшены');
       } else if (message.type === 'dsv-validation-complete') {
         // Design System Validator - валидация завершена (новый формат)
         debugLog('DSV: Валидация завершена', message.data);
@@ -6612,6 +6631,8 @@ ${designSystemContext}
         const clearTokensButton = document.getElementById('dsv-clear-tokens-button');
         const importTokensButton = document.getElementById('dsv-import-tokens-button');
         const tokensJsonDetails = document.getElementById('dsv-tokens-json-details');
+        const tokensJsonTextarea = document.getElementById('dsv-tokens-json-textarea');
+        const copyJsonButton = document.getElementById('dsv-copy-json-button');
         
         if (message.hasTokens && message.count > 0) {
           if (tokensStatusText) {
@@ -6631,9 +6652,9 @@ ${designSystemContext}
             tokensLoadTime.style.display = 'inline-block';
           }
           
-          // Переключаем кнопки: скрываем импорт, показываем сброс
-          if (importTokensButton) {
-            importTokensButton.style.display = 'none';
+          // Переключаем кнопки: скрываем контейнер импорта, показываем сброс
+          if (importTokensButton && importTokensButton.parentElement) {
+            importTokensButton.parentElement.style.display = 'none';
           }
           if (clearTokensButton) {
             clearTokensButton.style.display = 'block';
@@ -6643,10 +6664,18 @@ ${designSystemContext}
           if (tokensJsonDetails) {
             tokensJsonDetails.style.display = 'block';
           }
+          
+          // Показываем JSON в textarea если есть данные
+          if (tokensJsonTextarea && message.tokensData) {
+            tokensJsonTextarea.value = JSON.stringify(message.tokensData, null, 2);
+            if (copyJsonButton) {
+              copyJsonButton.style.display = 'block';
+            }
+          }
         } else {
-          // Токенов нет - показываем импорт, скрываем сброс
-          if (importTokensButton) {
-            importTokensButton.style.display = 'block';
+          // Токенов нет - показываем контейнер импорта, скрываем сброс
+          if (importTokensButton && importTokensButton.parentElement) {
+            importTokensButton.parentElement.style.display = 'flex';
           }
           if (clearTokensButton) {
             clearTokensButton.style.display = 'none';

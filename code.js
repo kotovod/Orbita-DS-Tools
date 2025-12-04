@@ -202,6 +202,31 @@ function setNestedValue(obj, path, valueData) {
 }
 
 /**
+ * Функция для подсчёта количества токенов в структуре variables
+ */
+function countTokensInVariables(variables) {
+  let count = 0;
+  
+  function countInObject(obj) {
+    for (const key in obj) {
+      const value = obj[key];
+      if (value && typeof value === 'object') {
+        // Если это объект токена (содержит key и id), считаем его
+        if (value.key && value.id) {
+          count++;
+        } else {
+          // Иначе рекурсивно обходим вложенные объекты
+          countInObject(value);
+        }
+      }
+    }
+  }
+  
+  countInObject(variables);
+  return count;
+}
+
+/**
  * Функция для сортировки коллекций
  */
 function sortCollections(variablesByCollection) {
@@ -3063,8 +3088,70 @@ figma.ui.onmessage = async function(msg) {
           error: error.message
         });
       }
+    } else if (msg.type === 'dsv-save-tokens-full') {
+      // Design System Validator - сохранение полных данных токенов из JSON файла
+      try {
+        const tokensData = msg.tokensData;
+        
+        // Подсчитываем количество токенов
+        let count = tokensData.count || 0;
+        if (!count && tokensData.variables) {
+          // Считаем количество токенов во всех коллекциях
+          count = countTokensInVariables(tokensData.variables);
+        }
+        
+        console.log('DSV: Сохранение токенов из JSON файла, количество:', count);
+        
+        // Добавляем timestamp если его нет
+        if (!tokensData.timestamp) {
+          tokensData.timestamp = new Date().toISOString();
+        }
+        tokensData.count = count;
+        
+        // Сохраняем в память плагина
+        savedTokensFromJson = tokensData;
+        
+        // Пытаемся сохранить в clientStorage для постоянного хранения
+        try {
+          await figma.clientStorage.setAsync('dsv-tokens', tokensData);
+          
+          console.log('DSV: Токены сохранены в clientStorage');
+          
+          // Отправляем подтверждение в UI с данными токенов для отображения
+          figma.ui.postMessage({
+            type: 'dsv-tokens-saved',
+            count: count,
+            savedAt: tokensData.timestamp,
+            persistent: true,
+            tokensData: tokensData
+          });
+        } catch (storageError) {
+          console.warn('DSV: Не удалось сохранить в clientStorage:', storageError);
+          
+          // Отправляем частичный успех
+          figma.ui.postMessage({
+            type: 'dsv-tokens-saved',
+            count: count,
+            savedAt: tokensData.timestamp,
+            persistent: false,
+            warning: 'Токены загружены в память, но не сохранены навсегда',
+            tokensData: tokensData
+          });
+        }
+        
+        figma.notify(`✓ Загружено ${count} токенов из JSON`);
+        console.log('DSV: Токены успешно загружены из JSON файла');
+      } catch (error) {
+        console.error('DSV: Критическая ошибка при загрузке токенов из JSON:', error);
+        
+        figma.ui.postMessage({
+          type: 'dsv-tokens-save-error',
+          error: error.message || 'Неизвестная ошибка'
+        });
+        figma.notify(`✗ Ошибка загрузки: ${error.message}`, { error: true });
+      }
     } else if (msg.type === 'dsv-save-tokens') {
-      // Design System Validator - сохранение токенов в памяти и в clientStorage
+      // Design System Validator - сохранение токенов в памяти и в clientStorage (legacy формат)
       try {
         console.log('DSV: Сохранение токенов в памяти плагина, количество:', msg.tokens.length);
         savedTokensFromJson = msg.tokens;
@@ -3079,12 +3166,13 @@ figma.ui.onmessage = async function(msg) {
           
           console.log('DSV: Токены сохранены в clientStorage');
           
-          // Отправляем подтверждение в UI
+          // Отправляем подтверждение в UI с данными токенов для отображения
           figma.ui.postMessage({
             type: 'dsv-tokens-saved',
             count: msg.tokens.length,
             savedAt: new Date().toISOString(),
-            persistent: true
+            persistent: true,
+            tokensData: { tokens: msg.tokens }
           });
         } catch (storageError) {
           console.warn('DSV: Не удалось сохранить в clientStorage, токены будут доступны только в текущей сессии:', storageError);
@@ -3095,7 +3183,8 @@ figma.ui.onmessage = async function(msg) {
             count: msg.tokens.length,
             savedAt: new Date().toISOString(),
             persistent: false,
-            warning: 'Токены загружены в память, но не сохранены навсегда (ошибка IndexedDB)'
+            warning: 'Токены загружены в память, но не сохранены навсегда (ошибка IndexedDB)',
+            tokensData: { tokens: msg.tokens }
           });
         }
         
@@ -3117,11 +3206,18 @@ figma.ui.onmessage = async function(msg) {
       
       console.log('DSV: Запрос статуса токенов, есть токены:', hasTokens, 'количество:', count, 'savedAt:', savedAt);
       
+      // Подготавливаем данные токенов для показа в UI
+      let tokensData = null;
+      if (hasTokens && savedTokensFromJson.variables) {
+        tokensData = { tokens: savedTokensFromJson.variables };
+      }
+      
       figma.ui.postMessage({
         type: 'dsv-tokens-status',
         hasTokens: hasTokens,
         count: count,
-        savedAt: savedAt
+        savedAt: savedAt,
+        tokensData: tokensData
       });
     } else if (msg.type === 'dsv-bind-token') {
       // Design System Validator - привязка токена к свойству
