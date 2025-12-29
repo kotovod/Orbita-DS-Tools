@@ -528,10 +528,11 @@ function extractNumericValues(node, options = {}) {
       const paddingTop = node.paddingTop;
       const paddingBottom = node.paddingBottom;
       
-      const hasLeftVar = !!boundVariables['paddingLeft'];
-      const hasRightVar = !!boundVariables['paddingRight'];
-      const hasTopVar = !!boundVariables['paddingTop'];
-      const hasBottomVar = !!boundVariables['paddingBottom'];
+      // Корректная проверка наличия переменных (проверяем наличие id)
+      const hasLeftVar = !!(boundVariables['paddingLeft'] && boundVariables['paddingLeft'].id);
+      const hasRightVar = !!(boundVariables['paddingRight'] && boundVariables['paddingRight'].id);
+      const hasTopVar = !!(boundVariables['paddingTop'] && boundVariables['paddingTop'].id);
+      const hasBottomVar = !!(boundVariables['paddingBottom'] && boundVariables['paddingBottom'].id);
       
       // Проверяем горизонтальный padding
       if (typeof paddingLeft === 'number' && typeof paddingRight === 'number') {
@@ -615,12 +616,13 @@ function extractNumericValues(node, options = {}) {
       // Gap (itemSpacing) - если включено в настройках
       if (props.spacing !== false) {
       if (typeof node.itemSpacing === 'number') {
+        const hasItemSpacingVar = !!(boundVariables['itemSpacing'] && boundVariables['itemSpacing'].id);
         values.push({
           type: 'itemSpacing',
           value: node.itemSpacing,
           nodeName: node.name,
           nodeId: node.id,
-          hasVariable: !!boundVariables['itemSpacing'],
+          hasVariable: hasItemSpacingVar,
           valueType: 'numeric'
         });
         }
@@ -632,7 +634,9 @@ function extractNumericValues(node, options = {}) {
   if (props.cornerRadius !== false && 'cornerRadius' in node) {
     const corners = ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius'];
     const isMixedRadius = node.cornerRadius === figma.mixed;
-    const hasIndependentCorners = corners.some(corner => boundVariables[corner] !== undefined);
+    const hasIndependentCorners = corners.some(corner => 
+      boundVariables[corner] && boundVariables[corner].id
+    );
     const cornerValues = corners.map(corner => node[corner]).filter(val => typeof val === 'number');
     const allCornersEqual = cornerValues.length === 4 && cornerValues.every(val => val === cornerValues[0]);
     
@@ -641,24 +645,26 @@ function extractNumericValues(node, options = {}) {
       corners.forEach(corner => {
         const cornerValue = node[corner];
         if (typeof cornerValue === 'number') {
+          const hasCornerVar = !!(boundVariables[corner] && boundVariables[corner].id);
           values.push({
             type: corner,
             value: cornerValue,
             nodeName: node.name,
             nodeId: node.id,
-            hasVariable: !!boundVariables[corner],
+            hasVariable: hasCornerVar,
             valueType: 'numeric'
           });
         }
       });
     } else if (typeof node.cornerRadius === 'number') {
       // Все углы одинаковые и используется общий cornerRadius
+      const hasCornerRadiusVar = !!(boundVariables['cornerRadius'] && boundVariables['cornerRadius'].id);
       values.push({
         type: 'cornerRadius',
         value: node.cornerRadius,
         nodeName: node.name,
         nodeId: node.id,
-        hasVariable: !!boundVariables['cornerRadius'],
+        hasVariable: hasCornerRadiusVar,
         valueType: 'numeric'
       });
     }
@@ -668,12 +674,42 @@ function extractNumericValues(node, options = {}) {
   if (props.strokes !== false && 'strokeWeight' in node && typeof node.strokeWeight === 'number') {
     const hasVisibleStrokes = node.strokes && node.strokes.length > 0;
     if (hasVisibleStrokes) {
+      const strokeWeightVar = boundVariables['strokeWeight'];
+      
+      // Проверяем также individual stroke weights (для каждой стороны отдельно)
+      const hasIndividualStrokeWeights = !!(
+        boundVariables['strokeTopWeight'] ||
+        boundVariables['strokeRightWeight'] ||
+        boundVariables['strokeBottomWeight'] ||
+        boundVariables['strokeLeftWeight']
+      );
+      
+      // Проверяем, все ли стороны имеют переменные (если используются individual strokes)
+      const allIndividualStrokesHaveVars = hasIndividualStrokeWeights && 
+        !!(boundVariables['strokeTopWeight'] && boundVariables['strokeTopWeight'].id) &&
+        !!(boundVariables['strokeRightWeight'] && boundVariables['strokeRightWeight'].id) &&
+        !!(boundVariables['strokeBottomWeight'] && boundVariables['strokeBottomWeight'].id) &&
+        !!(boundVariables['strokeLeftWeight'] && boundVariables['strokeLeftWeight'].id);
+      
+      const hasStrokeWeightVariable = 
+        !!(strokeWeightVar && strokeWeightVar.id) || allIndividualStrokesHaveVars;
+      
+      console.log(`🖊️ DSV: Проверяем strokeWeight для "${node.name}":`, {
+        value: node.strokeWeight,
+        hasBoundVariables: !!strokeWeightVar,
+        boundVariablesStructure: strokeWeightVar,
+        hasIndividualStrokeWeights: hasIndividualStrokeWeights,
+        allIndividualStrokesHaveVars: allIndividualStrokesHaveVars,
+        hasVariableId: hasStrokeWeightVariable,
+        allBoundVariablesKeys: Object.keys(boundVariables)
+      });
+      
       values.push({
         type: 'strokeWeight',
         value: node.strokeWeight,
         nodeName: node.name,
         nodeId: node.id,
-        hasVariable: !!boundVariables['strokeWeight'],
+        hasVariable: hasStrokeWeightVariable,
         valueType: 'numeric'
       });
     }
